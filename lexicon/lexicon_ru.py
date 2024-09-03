@@ -28,8 +28,10 @@ LEXICON: dict[str, str] = {
     # 'formtosend': 'Заполнить форму для заказа продукции',
     'select_action': 'Выберите действие',
     'reception_list': "Список записей",
-    'add_or_delete_reception': "Добавить или удалить запись",
-    'add_or_delete_position': 'Добавить позицию',
+    'add_or_delete_reception': 'Добавить или удалить запись',
+    'add_reception': 'Добавить запись',
+    'delete_reception': 'Удалить запись',
+    'add_or_delete_position': 'Добавить позицию материала',
     'list_materials': 'Список материалов',
     'pass': 'Заглушка',
 }
