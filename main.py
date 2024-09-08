@@ -5,6 +5,7 @@ from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram import Bot, Dispatcher
 from config_data.config import Config, load_config
+from database.methods import create_model
 from handlers import other_handlers, user_handlers #form_handlers,
 from keyboards.main_menu import set_main_menu
 
@@ -14,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 # Функция конфигурирования и запуска бота
 async def main():
+
+    await create_model()
 
     config: Config = load_config()
 

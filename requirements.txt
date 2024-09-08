@@ -28,3 +28,5 @@ requests==2.31.0
 typing_extensions==4.11.0
 urllib3==2.2.1
 yarl==1.9.4
+SQLAlchemy==2.0.34
+asyncpg==0.29.0

@@ -7,6 +7,7 @@ from aiogram.types import CallbackQuery, Message, FSInputFile
 # from keyboards.inlines_kb import create_calendar_keyboard, create_product_keyboard
 from keyboards.main_kb import start_no_kb
 from keyboards.choise_kb import calendar_choise_ketboard
+from keyboards.reply import get_keyboard
 from lexicon.lexicon_ru import LEXICON, LEXICON_BUTTONS
 # from database.database import library_of_articles, products_in_sale
 
@@ -14,7 +15,18 @@ router = Router()
 
 @router.message(CommandStart())
 async def process_start_command(message: Message):
+    await message.answer(f"Hello, {message.from_user.full_name}!")
     await message.answer(LEXICON[message.text], reply_markup=start_no_kb)
+    await message.answer(
+        text=LEXICON[message.text], reply_markup=get_keyboard(
+            "Меню",
+            "О магазине",
+            "Варианты оплаты",
+            "Варианты доставки",
+            placeholder="Что вас интересует?",
+            sizes=(2, 2)
+        ))
+
 
 @router.message(Command(commands='help'))
 async def process_help_command(message: Message):
@@ -25,7 +37,7 @@ async def process_help_command(message: Message):
 async def calendar_menu(message: Message):
     await message.answer(
             text=LEXICON['select_action'],
-            reply_markup=calendar_choise_ketboard
+            reply_markup=calendar_choise_ketboard()
         )
 
 
