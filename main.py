@@ -4,27 +4,45 @@ import logging
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram import Bot, Dispatcher
+
+from dotenv import find_dotenv, load_dotenv
+
+load_dotenv(find_dotenv())
+
 from config_data.config import Config, load_config
-from database.methods import create_model
+from database.methods import create_db, drop_db
 from handlers import other_handlers, user_handlers #form_handlers,
 from keyboards.main_menu import set_main_menu
 
 # Инициализируем логгер
 logger = logging.getLogger(__name__)
 
+config: Config = load_config()
+
+bot = Bot(
+    token=config.tg_bot.token,
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+)
+dp = Dispatcher()
+
+
+async def on_startup(bot):
+
+    run_param = True
+    if run_param:
+        await drop_db()
+
+    await create_db()
+
+
+async def on_shutdown(bot):
+    print('бот лег')
 
 # Функция конфигурирования и запуска бота
 async def main():
 
-    await create_model()
-
-    config: Config = load_config()
-
-    bot = Bot(
-        token=config.tg_bot.token,
-        default=DefaultBotProperties(parse_mode=ParseMode.HTML)
-    )
-    dp = Dispatcher()
+    dp.startup.register(on_startup)
+    dp.shutdown.register(on_shutdown)
 
     await set_main_menu(bot)
 

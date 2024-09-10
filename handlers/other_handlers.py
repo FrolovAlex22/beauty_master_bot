@@ -1,6 +1,9 @@
 from aiogram import Router
 from aiogram.types import Message
 
+from handlers.user_handlers import ADMIN_KB
+from lexicon.lexicon_ru import LEXICON
+
 router = Router()
 
 
@@ -8,8 +11,4 @@ router = Router()
 # не предусмотренные логикой работы бота
 @router.message()
 async def send_echo(message: Message):
-    await message.answer(
-        'Этот бот не для переписки. Бот помошник бьюти мастерам. '
-        'Если вы хотите мной воспользоваться можете написать Лиане '
-        'когда у нее хорошее настроение она добавляет новых пользователей ;)'
-        )
+    await message.answer(LEXICON["other_answer"], reply_markup=ADMIN_KB)
