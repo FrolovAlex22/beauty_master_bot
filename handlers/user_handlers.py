@@ -43,7 +43,9 @@ async def process_help_command(message: Message):
 
 
 @router.message(Command(commands="main_menu"))
-async def process_main_menu_command(message: Message):
+async def process_main_menu_command(message: Message, state: FSMContext):
+    if state:
+        await state.clear()
     await message.answer(
         LEXICON[message.text],
         reply_markup=ADMIN_KB
@@ -75,7 +77,6 @@ class AddRecord(StatesGroup):
 
 @router.message(StateFilter(None), F.text == "Добавить запись")
 async def calendar_add_reception(message: Message, state: FSMContext):
-    # Требует доработки запуск FSM в хендлере
     await message.answer(text=LEXICON['record_client'], reply_markup=ReplyKeyboardRemove()
     )
     await state.set_state(AddRecord.name)
@@ -110,12 +111,12 @@ async def calendar_wrong_name_client(message: Message, state: FSMContext):
 @router.message(AddRecord.phone_number, F.text)
 async def calendar_add_phone_number_client(message: Message, state: FSMContext):
     answer = message.text
-    number = answer.replace("+", "").replace(" ", "").isnumeric()
-    if number and len(number) == 11:
+    number = answer.replace("+", "").replace(" ", "")
+    if number.isnumeric() and len(number) == 11:
         await state.update_data(phone_number=number)
     else:
         await message.answer(
-            LEXICON_CALENDAR["calendar_add_phone_number_invalid_data"]
+            LEXICON_CALENDAR["calendar_add_phone_number_invalid_len_phone"]
         )
         return
     data = await state.get_data()
@@ -143,8 +144,7 @@ async def calendar_delete_reception(message: Message):
 
 @router.message(F.text == "Мои записи")
 async def calendar_reception_list(message: Message):
-    await message.answer(text=LEXICON['pass'], reply_markup=ADMIN_KB
-    )
+    await message.answer(text=LEXICON['pass'], reply_markup=ADMIN_KB)
 
 
 @router.message(Command(commands="material"))
@@ -166,6 +166,7 @@ class AddMaterial(StatesGroup):
     # Шаги состояний
     title = State()
     description = State()
+    photo = State()
     packing = State()
     price = State()
     quantity = State()
@@ -198,17 +199,27 @@ async def material_add_title_wrong(message: Message, state: FSMContext):
 @router.message(AddMaterial.description, F.text)
 async def material_add_position_description(message: Message, state: FSMContext):
     await state.update_data(description=message.text)
+    await message.answer(LEXICON_MATERIAL["material_add_input_photo"])
+    await state.set_state(AddMaterial.photo)
+
+
+@router.message(AddMaterial.description)
+async def material_add_description_wrong(message: Message, state: FSMContext):
+    await message.answer(LEXICON_MATERIAL["material_add_description_wrong"])
+
+
+@router.message(AddMaterial.photo, F.photo)
+async def material_add_position_photo(message: Message, state: FSMContext):
+    await state.update_data(photo=message.photo[-1].file_id)
     await message.answer(
         LEXICON_MATERIAL["material_add_input_packing"]
     )
     await state.set_state(AddMaterial.packing)
 
 
-@router.message(AddMaterial.description)
+@router.message(AddMaterial.photo)
 async def material_add_description_wrong(message: Message, state: FSMContext):
-    await message.answer(
-        LEXICON_MATERIAL["material_add_description_wrong"]
-    )
+    await message.answer(LEXICON_MATERIAL["material_add_photo_wrong"])
 
 
 @router.message(AddMaterial.packing, F.text)
@@ -255,13 +266,16 @@ async def material_add_position_price(message: Message, state: FSMContext):
         await message.answer(LEXICON_MATERIAL["material_add_price_wrong"])
         return
     data = await state.get_data()
-    await message.answer(
-        text=f"<b>Материал добавлен в базу данных</b>\n"
-             f"Название: <b>{data["title"]}\n</b>"
-             f"Описание: <b>{data["description"]}\n</b>"
-             f"Фасовка: <b>{data["packing"]}\n</b>"
-             f"Цена: <b>{data["price"]}\n</b>"
-             f"Количество: <b>{data["quantity"]}\n</b>",
+    await message.answer_photo(
+        photo=data["photo"],
+        caption=(
+            f"<b>Материал добавлен в базу данных</b>\n"
+            f"Название: <b>{data["title"]}\n</b>"
+            f"Описание: <b>{data["description"]}\n</b>"
+            f"Фасовка: <b>{data["packing"]}\n</b>"
+            f"Цена: <b>{data["price"]}\n</b>"
+            f"Количество: <b>{data["quantity"]}\n</b>"
+        ),
         reply_markup=ADMIN_KB
     )
     await state.clear()
@@ -360,18 +374,21 @@ async def notes_add_image(message: Message, state: FSMContext):
     if data['image']:
         await message.answer_photo(
             data['image'],
-            caption=f"<b>Заметка добавлена в базу данных</b>\n"
+            caption=(
+                f"<b>Заметка добавлена в базу данных</b>\n"
                 f"Название: <b>{data['title']}\n</b>"
-                f"Описание: <b>{data['description']}\n</b>",
+                f"Описание: <b>{data['description']}\n</b>"
+            ),
             reply_markup=ADMIN_KB
         )
         await state.clear()
         return
     await message.answer(
-        text=f"<b>Заметка добавлена в базу данных</b>\n"
-             f"Название: <b>{data['title']}\n</b>"
-             f"Описание: <b>{data['description']}\n</b>"
-             f"Изображение: <b>Отсутствует</b>",
+        text=(
+            f"<b>Заметка добавлена в базу данных</b>\n"
+            f"Название: <b>{data['title']}\n</b>"
+            f"Описание: <b>{data['description']}\n</b>"
+            f"Изображение: <b>Отсутствует</b>"),
         reply_markup=ADMIN_KB
     )
     await state.clear()

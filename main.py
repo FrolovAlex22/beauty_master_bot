@@ -10,7 +10,7 @@ from dotenv import find_dotenv, load_dotenv
 load_dotenv(find_dotenv())
 
 from config_data.config import Config, load_config
-from database.methods import create_db, drop_db
+from database.engine import create_db, drop_db
 from handlers import other_handlers, user_handlers #form_handlers,
 from keyboards.main_menu import set_main_menu
 
