@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Float, String, Text, func
+from sqlalchemy import Float, String, Text, func, BigInteger
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -26,11 +26,11 @@ class User(Base):
 
 
 class Calendar(Base):
-    __tablename__ = "calendars"
+    __tablename__ = "records"
 
     id : Mapped[int] = mapped_column(primary_key=True)
     name : Mapped[str] = mapped_column(String(30), nullable=False)
-    phone_number : Mapped[int] = mapped_column(nullable=False)
+    phone_number : Mapped[int] = mapped_column(BigInteger, nullable=False)
 
 
 class Product(Base):
