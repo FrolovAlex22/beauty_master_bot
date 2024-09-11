@@ -13,7 +13,7 @@ load_dotenv(find_dotenv())
 
 from config_data.config import Config, load_config
 from database.engine import create_db, drop_db, session_maker
-from handlers import other_handlers, user_handlers #form_handlers,
+from handlers import check_handlers, material_handlers, note_handlers, other_handlers, user_handlers, record_handlers
 from keyboards.main_menu import set_main_menu
 
 # Инициализируем логгер
@@ -46,13 +46,15 @@ async def main():
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
-    dp.update.middleware(DataBaseSession(session_pool=session_maker))
 
     await set_main_menu(bot)
 
     # Регистрируем роутеры в диспетчере
     dp.include_router(user_handlers.router)
-    # dp.include_router(form_handlers.router)
+    dp.include_router(record_handlers.record_router)
+    dp.include_router(material_handlers.material_router)
+    dp.include_router(note_handlers.note_router)
+    dp.include_router(check_handlers.check_router)
     dp.include_router(other_handlers.router)
 
     await bot.delete_webhook(drop_pending_updates=True)

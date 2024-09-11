@@ -1,27 +1,30 @@
 from aiogram import F, Router
 from aiogram.types import ReplyKeyboardRemove
-from aiogram.filters import Command, CommandStart, StateFilter, or_f
+from aiogram.filters import StateFilter, or_f
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import CallbackQuery, Message, FSInputFile
+from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
-# from filters.filters import IsDigitCallbackData
-# from keyboards.inlines_kb import create_calendar_keyboard, create_product_keyboard
-# from keyboards.choise_kb import calendar_choise_ketboard
-from database.methods import orm_add_record, orm_get_records, orm_get_record, orm_delete_record, orm_update_record
+from database.methods import (
+    orm_add_record, orm_get_records,
+    orm_get_record, orm_delete_record,
+    orm_update_record
+)
+from database.engine import session_maker
 from keyboards.reply import get_keyboard
 from keyboards.inline import get_callback_btns
 from keyboards.other_kb import CHANGE_KB, ADMIN_KB, RECORD_KB
 from lexicon.lexicon_ru import (
     LEXICON,
     LEXICON_CALENDAR,
-    LEXICON_MATERIAL,
-    LEXICON_NOTES
 )
-# from database.database import library_of_articles, products_in_sale
+from middlewares.db import DataBaseSession
 
-router = Router()
+
+record_router = Router()
+
+record_router.message.middleware(DataBaseSession(session_pool=session_maker))
+record_router.callback_query.middleware(DataBaseSession(session_pool=session_maker))
 
 
 CHANGE_KB = get_keyboard(
@@ -35,12 +38,18 @@ class AddRecord(StatesGroup):
     name = State()
     phone_number = State()
     # date = State
+
     record_for_change = None
 
+    texts = {
+        "AddRecord:name": "Введите имя заново:",
+        "AddRecord:phone_number": "Введите номер телефона заново:",
+    }
 
 
 
-@router.callback_query(StateFilter(None), F.data.startswith("change_record_"))
+
+@record_router.callback_query(StateFilter(None), F.data.startswith("change_record_"))
 async def change_record_callback(
     callback: CallbackQuery, state: FSMContext, session: AsyncSession
 ):
@@ -57,29 +66,34 @@ async def change_record_callback(
     await state.set_state(AddRecord.name)
 
 
-# @router.message(StateFilter("*"), F.text.casefold() == "назад")
-# async def back_step_handler(message: Message, state: FSMContext) -> None:
-#     current_state = await state.get_state()
+@record_router.message(
+        StateFilter("*"),
+        F.text == "Вернуться на шаг назад"
+    )
+async def back_step_handler(message: Message, state: FSMContext) -> None:
+    current_state = await state.get_state()
 
 
-#     if current_state == AddRecord.name:
-#         await message.answer(
-#             'Предидущего шага нет, или введите название товара или напишите "отмена"'
-#         )
-#         return
+    if current_state == AddRecord.name:
+        await message.answer(
+            'Предидущего шага нет, или введите имя клиента или'
+            ' напишите "отмена"'
+        )
+        return
 
-#     previous = None
-#     for step in AddRecord.__all_states__:
-#         if step.state == current_state:
-#             await state.set_state(previous)
-#             await message.answer(
-#                 f"Ок, вы вернулись к прошлому шагу \n {AddRecord.texts[previous.state]}"
-#             )
-#             return
-#         previous = step
+    previous = None
+    for step in AddRecord.__all_states__:
+        if step.state == current_state:
+            await state.set_state(previous)
+            await message.answer(
+                "Ок, вы вернулись к прошлому шагу \n"
+                f" {AddRecord.texts[previous.state]}"
+            )
+            return
+        previous = step
 
 
-@router.message(StateFilter("*"), F.text.casefold() == "отмена")
+@record_router.message(StateFilter("*"), F.text.casefold() == "отмена")
 async def cancel_handler(message: Message, state: FSMContext) -> None:
     current_state = await state.get_state()
     if current_state is None:
@@ -91,14 +105,14 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
     await message.answer("Действия отменены", reply_markup=ADMIN_KB)
 
 
-@router.message(StateFilter(None), F.text == "Добавить запись")
+@record_router.message(StateFilter(None), F.text == "Добавить запись")
 async def calendar_add_reception(message: Message, state: FSMContext):
     await message.answer(text=LEXICON['record_client'], reply_markup=ReplyKeyboardRemove()
     )
     await state.set_state(AddRecord.name)
 
 
-@router.message(AddRecord.name, or_f(F.text))
+@record_router.message(AddRecord.name, or_f(F.text))
 async def calendar_add_name_client(message: Message, state: FSMContext):
     if len(message.text) >= 30:
         await message.answer(LEXICON_CALENDAR["calendar_add_long_name"])
@@ -117,12 +131,12 @@ async def calendar_add_name_client(message: Message, state: FSMContext):
     await state.set_state(AddRecord.phone_number)
 
 
-@router.message(AddRecord.name)
+@record_router.message(AddRecord.name)
 async def calendar_wrong_name_client(message: Message, state: FSMContext):
     await message.answer(LEXICON_CALENDAR["calendar_wrong_name_client"])
 
 
-@router.message(AddRecord.phone_number, F.text)
+@record_router.message(AddRecord.phone_number, F.text)
 async def calendar_add_phone_number_client(
     message: Message,
     state: FSMContext,
@@ -164,7 +178,7 @@ async def calendar_add_phone_number_client(
 
 
 
-@router.message(AddRecord.phone_number)
+@record_router.message(AddRecord.phone_number)
 async def calendar_wrong_phone_number_client(
     message: Message,
     state: FSMContext
@@ -172,7 +186,7 @@ async def calendar_wrong_phone_number_client(
     await message.answer(LEXICON_CALENDAR["calendar_wrong_phone_number_client"])
 
 
-@router.message(F.text == "Мои записи")
+@record_router.message(F.text == "Мои записи")
 async def calendar_reception_list(message: Message, session: AsyncSession):
     for record in await orm_get_records(session):
         await message.answer(
@@ -193,7 +207,7 @@ async def calendar_reception_list(message: Message, session: AsyncSession):
     )
 
 
-@router.callback_query(F.data.startswith("delete_record_"))
+@record_router.callback_query(F.data.startswith("delete_record_"))
 async def delete_record_callback(callback: CallbackQuery, session: AsyncSession):
     record_id = callback.data.split("_")[-1]
     await orm_delete_record(session, int(record_id))
