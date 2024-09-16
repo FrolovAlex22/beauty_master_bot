@@ -14,7 +14,7 @@ from database.methods import orm_add_record, orm_get_records, orm_get_record, or
 from database.engine import session_maker
 from keyboards.reply import get_keyboard
 from keyboards.inline import get_callback_btns
-from keyboards.other_kb import CHANGE_KB, ADMIN_KB, RECORD_KB
+from keyboards.other_kb import ADMIN_KB, RECORD_KB
 from lexicon.lexicon_ru import (
     LEXICON,
     LEXICON_CALENDAR,

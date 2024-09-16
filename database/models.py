@@ -25,24 +25,25 @@ class User(Base):
     telegram_id : Mapped[int]
 
 
-class Calendar(Base):
+class Record(Base):
     __tablename__ = "records"
 
-    id : Mapped[int] = mapped_column(primary_key=True)
-    name : Mapped[str] = mapped_column(String(30), nullable=False)
-    phone_number : Mapped[int] = mapped_column(BigInteger, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    date: Mapped[datetime] = mapped_column(index=True)
+    name: Mapped[str] = mapped_column(String(30), nullable=False)
+    phone_number: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
 
-class Product(Base):
+class Material(Base):
     __tablename__ = "products"
 
-    id : Mapped[int] = mapped_column(primary_key=True)
-    title : Mapped[str] = mapped_column(String(50), nullable=False)
-    description : Mapped[str] = mapped_column(Text, nullable=False)
-    photo : Mapped[str] = mapped_column(String(150), nullable=False)
-    packing : Mapped[float] = mapped_column(Float(asdecimal=True), nullable=False)
-    price : Mapped[int] = mapped_column(nullable=False)
-    quantity : Mapped[int] = mapped_column(nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(50), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    photo:Mapped[str] = mapped_column(String(150), nullable=False)
+    packing: Mapped[float] = mapped_column(Float(asdecimal=True), nullable=False)
+    price: Mapped[int] = mapped_column(nullable=False)
+    quantity: Mapped[int] = mapped_column(nullable=False)
 
 
 class Note(Base):
@@ -51,4 +52,4 @@ class Note(Base):
     id : Mapped[int] = mapped_column(primary_key=True)
     title : Mapped[str] = mapped_column(String(50), nullable=False)
     description : Mapped[str] = mapped_column(Text, nullable=False)
-    photo : Mapped[str] = mapped_column(String(150), nullable=False)
+    photo : Mapped[str] = mapped_column(String(150), nullable=True)

@@ -1,50 +1,14 @@
 from aiogram import F, Router
-from aiogram.types import ReplyKeyboardRemove
-from aiogram.filters import Command, CommandStart, StateFilter, or_f
+from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import CallbackQuery, Message, FSInputFile
-from sqlalchemy.ext.asyncio import AsyncSession
-# from filters.filters import IsDigitCallbackData
-# from keyboards.inlines_kb import create_calendar_keyboard, create_product_keyboard
-# from keyboards.choise_kb import calendar_choise_ketboard
-from database.methods import orm_add_record, orm_get_records, orm_get_record, orm_delete_record, orm_update_record
+from aiogram.types import Message
+
 from keyboards.reply import get_keyboard
-from keyboards.inline import get_callback_btns
-from lexicon.lexicon_ru import (
-    LEXICON,
-    LEXICON_CALENDAR,
-    LEXICON_MATERIAL,
-    LEXICON_NOTES
-)
-# from database.database import library_of_articles, products_in_sale
+from keyboards.other_kb import ADMIN_KB, CHECK_KB, RECORD_KB, MATERIAL_KB, NOTE_KB
+from lexicon.lexicon_ru import LEXICON
 
 router = Router()
 
-
-ADMIN_KB = get_keyboard(
-        "Календарь записей",
-        "Мои материалы",
-        "Заметки для соц. сетей",
-        "Мастера города",
-        placeholder="Выберите действие",
-        sizes=(1, ),
-)
-
-CHANGE_KB = get_keyboard(
-        "Оставить как есть",
-        "Вернуться на шаг назад",
-        sizes=(1, ),
-)
-
-
-RECORD_KB = get_keyboard(
-    "Добавить запись",
-    "Мои записи",
-    "Главное меню",
-    sizes=(1, )
-)
 
 @router.message(CommandStart())
 async def process_start_command(message: Message):
@@ -69,7 +33,8 @@ async def process_main_menu_command(message: Message, state: FSMContext):
         reply_markup=ADMIN_KB
     )
 
-@router.message(Command(commands="calendar"))
+
+@router.message(Command(commands="records"))
 @router.message(F.text == "Календарь записей")
 async def calendar_menu(message: Message):
     await message.answer(
@@ -78,21 +43,13 @@ async def calendar_menu(message: Message):
         )
 
 
-@router.message(Command(commands="material"))
+@router.message(Command(commands="materials"))
 @router.message(F.text == "Мои материалы")
 async def material_menu(message: Message):
     await message.answer(
         text=LEXICON['select_action'],
-        reply_markup=get_keyboard(
-            "Добавить новую позицию в базу данных",
-            "Спиок материалов",
-            "Список для покупки",
-            "Главное меню",
-            placeholder="Выберите действие",
-            sizes=(1, )
-        )
+        reply_markup=MATERIAL_KB
     )
-
 
 
 @router.message(Command(commands="notes"))
@@ -100,22 +57,11 @@ async def material_menu(message: Message):
 async def calendar_menu(message: Message):
     await message.answer(
         text=LEXICON['select_action'],
-        reply_markup=get_keyboard(
-            "Добавить новую заметку",
-            "Посмотреть список заметок",
-            "Главное меню",
-            sizes=(1, )
-            )
+        reply_markup=NOTE_KB
         )
 
 
 @router.message(Command(commands="check"))
 @router.message(F.text == "Мастера города")
 async def calendar_menu(message: Message):
-    await message.answer(text=LEXICON['pass'], reply_markup=get_keyboard(
-        "Реконструкция волос",
-        "Маникюр",
-        "Ресницы",
-        sizes=(1, )
-        )
-    )
+    await message.answer(text=LEXICON['check_list'], reply_markup=CHECK_KB)

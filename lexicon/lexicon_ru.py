@@ -1,8 +1,8 @@
 LEXICON_COMMANDS: dict[str, str] = {
     "/main_menu": "Вернутся в главное меню",
     "/help": "Справка по работе бота",
-    "/calendar": "Календарь записей",
-    "/material": "Остаток материалов",
+    "/records": "Календарь записей",
+    "/materials": "Остаток материалов",
     "/notes": "Заметки для будущих постов в социальных сетях",
     "/check": "Проверить мастеров города",
     "/registration": "регистрация",
@@ -39,7 +39,7 @@ LEXICON: dict[str, str] = {
 
     "record_client": (
         "Если нужно отменить офрмирование записи напишите <b>отмена</b>\n\n"
-        "<b>Введите имя клиента</b>"
+        "<b>Введите дату приема клиента</b>"
     ),
 
     "material_add": (
@@ -54,10 +54,18 @@ LEXICON: dict[str, str] = {
 
     "select_action": "Выберите действие",
 
+    "check_list": "Каких мастеров будем проверять?",
+
     "pass": "Заглушка",
 }
 
+
+
 LEXICON_CALENDAR: dict[str, str] = {
+    "calendar_add_invalid_date": (
+        "Вы ввели не допустимые данные, введите дату записи заново"
+    ),
+
     "calendar_add_long_name": (
         "Имя клиента не должно превышать 30 символов.\n Введите заново"
     ),
@@ -66,10 +74,6 @@ LEXICON_CALENDAR: dict[str, str] = {
 
     "calendar_wrong_name_client": (
         "Вы ввели не допустимые данные, введите имя клиента заново"
-    ),
-
-    "calendar_add_phone_number_invalid_data": (
-        "Вы ввели не допустимые данные, введите номер телефона клиента заново"
     ),
 
     "calendar_add_phone_number_invalid_len_phone": (
@@ -83,6 +87,9 @@ LEXICON_CALENDAR: dict[str, str] = {
 }
 
 LEXICON_MATERIAL: dict[str, str] = {
+    "material_add_long_name": (
+        "Название материала не должно превышать 50 символов.\n Введите заново"
+    ),
 
     "material_add_input_description": "<b>Введите описание товара.</b>",
 
@@ -93,7 +100,7 @@ LEXICON_MATERIAL: dict[str, str] = {
     "material_add_input_photo": "<b>Добавте изображения продукции</b>",
 
     "material_add_photo_wrong": (
-        "Вы ввели не допустимые данные, добавте изразения продукции"
+        "Вы ввели не допустимые данные, добавте фотографию продукции"
     ),
 
     "material_add_input_packing": "<b>Введите вес/объем товара.</b>",
