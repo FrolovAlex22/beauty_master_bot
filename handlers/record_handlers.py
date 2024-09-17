@@ -119,9 +119,7 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
 async def calendar_add_reception(message: Message, state: FSMContext):
     await message.answer(
         text=LEXICON['record_client'],
-        reply_markup=(await SimpleCalendar(
-            locale=await get_user_locale(message.from_user)
-            ).start_calendar()
+        reply_markup=(await SimpleCalendar().start_calendar()
         )
     )
     await state.set_state(AddRecord.date)
@@ -139,15 +137,18 @@ async def calendar_add_name_client(
     today = datetime.now()
     today_plus_3_months = today + timedelta(days=90)
 
-    calendar = SimpleCalendar(
-        locale=await get_user_locale(callback_query.from_user), show_alerts=True
-    )
-    calendar.set_dates_range(today, today_plus_3_months)
+    # calendar = SimpleCalendar(
+    #     locale=await get_user_locale(callback_query.from_user), show_alerts=True
+    # )
+    # calendar.set_dates_range(today, today_plus_3_months)
 
 
-    selected, date = (
-    await calendar.process_selection(callback_query, callback_data)
-)
+    # selected, date = (
+    #     await calendar.process_selection(callback_query, callback_data)
+    # )
+
+    selected, date = await SimpleCalendar(
+        locale=await get_user_locale(callback_query.from_user)).process_selection(callback_query, callback_data)
     if selected:
         await state.update_data(date=date)
         await callback_query.message.answer(

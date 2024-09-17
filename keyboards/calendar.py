@@ -144,9 +144,16 @@ class Markup:
 
     def __init__(
         self,
-        title: str) -> None:
+        title: str,
+        days_header: List[InlineKeyboardButton],
+        days: List[InlineKeyboardButton],
+        nav_buttons: List[InlineKeyboardButton]
+    ) -> None:
         self.keyboard = InlineKeyboardMarkup()
         self.title = title
+        self.days_header = days_header
+        self.days = days
+        self.nav_buttons = nav_buttons
 
     @property
     def kb(self) -> InlineKeyboardMarkup:
