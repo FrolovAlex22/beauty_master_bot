@@ -16,7 +16,7 @@ from database.methods import (
 from database.engine import session_maker
 from handlers.material_handlers import AddMaterial
 from handlers.note_handlers import AddNotes
-from keyboards.calendar import CalendarMarkup, Markup
+from keyboards.my_calendar import CalendarMarkup, Markup
 from keyboards.reply import get_keyboard
 from keyboards.inline import get_callback_btns
 from keyboards.other_kb import CHANGE_RECORD_KB, ADMIN_KB, RECORD_KB
@@ -117,10 +117,12 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
 
 @record_router.message(StateFilter(None), F.text == "Добавить запись")
 async def calendar_add_reception(message: Message, state: FSMContext):
+    current_date = datetime.now()
+    current_month = current_date.month
+    current_year = current_date.year
     await message.answer(
         text=LEXICON['record_client'],
-        reply_markup=(await SimpleCalendar().start_calendar()
-        )
+        reply_markup=CalendarMarkup(current_month, current_year).build.kb
     )
     await state.set_state(AddRecord.date)
 

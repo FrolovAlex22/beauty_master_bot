@@ -4,6 +4,8 @@ beautifulsoup4
 aiogram
 aiohttp
 fake_useragent
+lxml
+undetected-chromedriver
 aiofiles==23.2.1
 aiogram==3.6.0
 aiohttp==3.9.5
