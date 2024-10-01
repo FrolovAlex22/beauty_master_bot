@@ -51,21 +51,22 @@ class AddRecord(StatesGroup):
 @record_router.callback_query(StateFilter(None), F.data.startswith("change_record_"))
 async def change_record_callback(
     callback: CallbackQuery, state: FSMContext, session: AsyncSession
-):
+) -> None:
     record_id = callback.data.split("_")[-1]
 
     record_for_change = await orm_get_record(session, int(record_id))
 
     AddRecord.record_for_change = record_for_change
 
+    current_date = datetime.now()
+    current_month = current_date.month
+    current_year = current_date.year
+
     await callback.answer()
     await callback.message.answer(
         "Введите дату приема",
-        reply_markup=(await SimpleCalendar(
-            locale=await get_user_locale(callback.from_user)
-            ).start_calendar()
+        reply_markup=CalendarMarkup(current_month, current_year).build.kb
         )
-    )
     await state.set_state(AddRecord.date)
 
 
@@ -116,7 +117,7 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
 
 
 @record_router.message(StateFilter(None), F.text == "Добавить запись")
-async def calendar_add_reception(message: Message, state: FSMContext):
+async def calendar_add_reception(message: Message, state: FSMContext) -> None:
     current_date = datetime.now()
     current_month = current_date.month
     current_year = current_date.year
@@ -127,44 +128,65 @@ async def calendar_add_reception(message: Message, state: FSMContext):
     await state.set_state(AddRecord.date)
 
 
-# TODO: Нужно переопределить начало календаря на сегодняшний день и 3 месяца для записи
-# @record_router.message(AddRecord.date, F.text, SimpleCalendarCallback.filter())
-@record_router.callback_query(AddRecord.date, SimpleCalendarCallback.filter())
-async def calendar_add_name_client(
-    # message: Message,
-    callback_query: CallbackQuery,
-    callback_data: CallbackData,
-    state: FSMContext
-):
-    today = datetime.now()
-    today_plus_3_months = today + timedelta(days=90)
-
-    # calendar = SimpleCalendar(
-    #     locale=await get_user_locale(callback_query.from_user), show_alerts=True
-    # )
-    # calendar.set_dates_range(today, today_plus_3_months)
-
-
-    # selected, date = (
-    #     await calendar.process_selection(callback_query, callback_data)
-    # )
-
-    selected, date = await SimpleCalendar(
-        locale=await get_user_locale(callback_query.from_user)).process_selection(callback_query, callback_data)
-    if selected:
-        await state.update_data(date=date)
-        await callback_query.message.answer(
-            f"Вы выбрали дату: {date.strftime("%d/%m/%Y")}\n"
-            "<b>Введите имя клиента</b>",
-            reply_markup=ReplyKeyboardRemove()
+@record_router.callback_query(AddRecord.date)
+async def calendar_add_date(
+    callback: CallbackQuery, session: AsyncSession, state: FSMContext
+) -> None:
+    """Ответ на нажатие кнопок календаря."""
+    mes = callback.data
+    if "date" in mes:
+        date = datetime.strptime(callback.data.split()[1], '%d.%m.%Y')
+        if date < datetime.now():
+            await callback.message.answer("Дата должна быть в будущем")
+            return
+        await callback.message.answer(
+            text=(
+                f"Вы выбрали дату: {callback.data}\n\n"
+                "<b>Введите имя клиента</b>"
+                )
+            )
+        await callback.bot.delete_message(
+            callback.from_user.id, callback.message.message_id
         )
+        await state.update_data(date=date)
+        await state.set_state(AddRecord.name)
+    elif "back" in mes or "next" in mes:
+        await get_next_month(callback)
 
-    await state.set_state(AddRecord.name)
+
+# # TODO: Нужно переопределить начало календаря на сегодняшний день и 3 месяца для записи
+# # @record_router.message(AddRecord.date, F.text, SimpleCalendarCallback.filter())
+# @record_router.callback_query(AddRecord.date, SimpleCalendarCallback.filter())
+# async def calendar_add_name_client(
+#     # message: Message,
+#     callback_query: CallbackQuery,
+#     callback_data: CallbackData,
+#     state: FSMContext
+# ):
+#     today = datetime.now()
+#     today_plus_3_months = today + timedelta(days=90)
+
+#     # calendar = SimpleCalendar(
+#     #     locale=await get_user_locale(callback_query.from_user), show_alerts=True
+#     # )
+#     # calendar.set_dates_range(today, today_plus_3_months)
 
 
-@record_router.message(StateFilter(None), SimpleCalendarCallback.filter())
-async def calendar_wrong_name_client(message: Message, state: FSMContext):
-    await message.answer("Вот это поворот")
+#     # selected, date = (
+#     #     await calendar.process_selection(callback_query, callback_data)
+#     # )
+
+#     selected, date = await SimpleCalendar(
+#         locale=await get_user_locale(callback_query.from_user)).process_selection(callback_query, callback_data)
+#     if selected:
+#         await state.update_data(date=date)
+#         await callback_query.message.answer(
+#             f"Вы выбрали дату: {date.strftime("%d/%m/%Y")}\n"
+#             "<b>Введите имя клиента</b>",
+#             reply_markup=ReplyKeyboardRemove()
+#         )
+
+#     await state.set_state(AddRecord.name)
 
 
 @record_router.message(AddRecord.date)
@@ -215,6 +237,7 @@ async def calendar_add_phone_number_client(
             )
             return
     data = await state.get_data()
+    date = data["date"].strftime("%d.%m.%Y")
 
     try:
         if AddRecord.record_for_change:
@@ -226,7 +249,7 @@ async def calendar_add_phone_number_client(
                 f"Запись клиента добавлена\n"
                 f"<b>Имя клиента:</b> {data["name"]}\n"
                 f"<b>Номер клиента:</b> {data["phone_number"]}\n"
-                f"<b>Дата приема клиента:</b> {data["date"]}"
+                f"<b>Дата приема клиента:</b> {date}"
             ),
             reply_markup=RECORD_KB
         )
@@ -274,3 +297,17 @@ async def delete_record_callback(callback: CallbackQuery, session: AsyncSession)
 
     await callback.answer("Запись удалена!")
     await callback.message.answer("Запись удалена!")
+
+
+async def get_next_month(callback: CallbackQuery) -> None:
+    """Смена месяца на клавиатуре."""
+    month, year = map(int, callback.data.split()[1].split("."))
+    calendar = CalendarMarkup(month, year)
+    if "next" in callback.data:
+        await callback.message.edit_reply_markup(
+            reply_markup=calendar.next_month().kb
+        )
+    elif "back" in callback.data:
+        await callback.message.edit_reply_markup(
+            reply_markup=calendar.previous_month().kb
+        )
