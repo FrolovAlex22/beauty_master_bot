@@ -32,6 +32,8 @@ def get_href_data(url):
     r = requests.get(url=url, headers=HEADERS)
     soup = BeautifulSoup(r.text, "html.parser")
     print(r)
+    with open("data.json", "w", encoding="utf-8") as f:
+        f.write(r.text)
 
     city_masters = soup.find(
         "div",

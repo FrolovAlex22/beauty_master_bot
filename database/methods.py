@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,10 +7,11 @@ from database.models import Record, Material, Note
 
 # Методы для модели Record
 async def orm_add_record(session: AsyncSession, data: dict):
+    date = datetime.strptime(data["date"], '%d.%m.%Y')
     obj = Record(
         name=data["name"],
         phone_number=data["phone_number"],
-        date=data["date"],
+        date=date,
     )
     session.add(obj)
     await session.commit()

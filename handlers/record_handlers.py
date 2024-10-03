@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
-from aiogram_calendar import SimpleCalendar, get_user_locale, SimpleCalendarCallback
+from datetime import datetime
 from aiogram import F, Router
-from aiogram.types import ReplyKeyboardRemove
-from aiogram.filters import StateFilter, or_f
-from aiogram.filters.callback_data import CallbackData
+from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage, Redis
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.methods import (
@@ -16,7 +15,7 @@ from database.methods import (
 from database.engine import session_maker
 from handlers.material_handlers import AddMaterial
 from handlers.note_handlers import AddNotes
-from keyboards.my_calendar import CalendarMarkup, Markup
+from keyboards.my_calendar import CalendarMarkup
 from keyboards.reply import get_keyboard
 from keyboards.inline import get_callback_btns
 from keyboards.other_kb import CHANGE_RECORD_KB, ADMIN_KB, RECORD_KB
@@ -135,20 +134,21 @@ async def calendar_add_date(
     """Ответ на нажатие кнопок календаря."""
     mes = callback.data
     if "date" in mes:
-        date = datetime.strptime(callback.data.split()[1], '%d.%m.%Y')
+        str_date = callback.data.split()[1]
+        date = datetime.strptime(str_date, '%d.%m.%Y')
         if date < datetime.now():
             await callback.message.answer("Дата должна быть в будущем")
             return
         await callback.message.answer(
             text=(
-                f"Вы выбрали дату: {callback.data}\n\n"
+                f"Вы выбрали дату: {str_date}\n\n"
                 "<b>Введите имя клиента</b>"
                 )
             )
         await callback.bot.delete_message(
             callback.from_user.id, callback.message.message_id
         )
-        await state.update_data(date=date)
+        await state.update_data(date=str_date)
         await state.set_state(AddRecord.name)
     elif "back" in mes or "next" in mes:
         await get_next_month(callback)
@@ -237,7 +237,6 @@ async def calendar_add_phone_number_client(
             )
             return
     data = await state.get_data()
-    date = data["date"].strftime("%d.%m.%Y")
 
     try:
         if AddRecord.record_for_change:
@@ -249,7 +248,7 @@ async def calendar_add_phone_number_client(
                 f"Запись клиента добавлена\n"
                 f"<b>Имя клиента:</b> {data["name"]}\n"
                 f"<b>Номер клиента:</b> {data["phone_number"]}\n"
-                f"<b>Дата приема клиента:</b> {date}"
+                f"<b>Дата приема клиента:</b> {data["date"]}"
             ),
             reply_markup=RECORD_KB
         )

@@ -2,17 +2,17 @@ import asyncio
 import logging
 
 from aiogram.client.bot import DefaultBotProperties
+from aiogram.fsm.storage.memory import MemoryStorage
+# from aiogram.fsm.storage.redis import RedisStorage, Redis
 from aiogram.enums import ParseMode
 from aiogram import Bot, Dispatcher
 
 from dotenv import find_dotenv, load_dotenv
 
-from middlewares.db import DataBaseSession
-
 load_dotenv(find_dotenv())
 
 from config_data.config import Config, load_config
-from database.engine import create_db, drop_db, session_maker
+from database.engine import create_db, drop_db
 from handlers import check_handlers, material_handlers, note_handlers, other_handlers, user_handlers, record_handlers
 from keyboards.main_menu import set_main_menu
 
@@ -21,11 +21,16 @@ logger = logging.getLogger(__name__)
 
 config: Config = load_config()
 
+# Инициализируем Redis
+# redis = Redis(host='localhost')
+# storage = RedisStorage(redis=redis)
+storage = MemoryStorage()
+
 bot = Bot(
     token=config.tg_bot.token,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
-dp = Dispatcher()
+dp = Dispatcher(storage=storage)
 
 
 async def on_startup(bot):

@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Float, String, Text, func, BigInteger
+from sqlalchemy import Float, Numeric, String, Text, func, BigInteger
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -41,7 +41,7 @@ class Material(Base):
     title: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     photo:Mapped[str] = mapped_column(String(150), nullable=False)
-    packing: Mapped[float] = mapped_column(Float(asdecimal=True), nullable=False)
+    packing: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
     price: Mapped[int] = mapped_column(nullable=False)
     quantity: Mapped[int] = mapped_column(nullable=False)
 

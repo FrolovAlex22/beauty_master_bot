@@ -284,7 +284,7 @@ async def material_add_position(callback: CallbackQuery, session: AsyncSession):
 
 
 @material_router.message(F.text == "Спиок материалов")
-async def material_add_position(message: Message, session: AsyncSession):
+async def materials_add_list(message: Message, session: AsyncSession):
     for material in await orm_get_materials(session):
         await message.answer_photo(
                 photo=material.photo,
