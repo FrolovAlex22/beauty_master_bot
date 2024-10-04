@@ -2,10 +2,42 @@ from datetime import datetime
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import Record, Material, Note
+from database.models import Record, Material, Note, Banner
 
 
-# Методы для модели Record
+############### Работа с баннерами (информационными страницами) ###############
+
+async def orm_add_banner_description(session: AsyncSession, data: dict):
+    #Добавляем новый или изменяем существующий по именам
+    #пунктов меню: main, about, cart, shipping, payment, catalog
+    query = select(Banner)
+    result = await session.execute(query)
+    if result.first():
+        return
+    session.add_all([Banner(name=name, description=description) for name, description in data.items()])
+    await session.commit()
+
+
+async def orm_change_banner_image(session: AsyncSession, name: str, image: str):
+    query = update(Banner).where(Banner.name == name).values(image=image)
+    await session.execute(query)
+    await session.commit()
+
+
+async def orm_get_banner(session: AsyncSession, page: str):
+    query = select(Banner).where(Banner.name == page)
+    result = await session.execute(query)
+    return result.scalar()
+
+
+async def orm_get_info_pages(session: AsyncSession):
+    query = select(Banner)
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+############### Работа с записями клиентов ####################################
+
 async def orm_add_record(session: AsyncSession, data: dict):
     date = datetime.strptime(data["date"], '%d.%m.%Y')
     obj = Record(
@@ -46,7 +78,8 @@ async def orm_delete_record(session: AsyncSession, record_id: int):
     await session.commit()
 
 
-# Методы для модели Material
+############### Работа с материаломи мастера ##################################
+
 async def orm_add_material(session: AsyncSession, data: dict):
     obj = Material(
         title=data["title"],
@@ -92,7 +125,8 @@ async def orm_delete_material(session: AsyncSession, material_id: int):
     await session.commit()
 
 
-# Методы для модели Note
+############### Работа с записями контента ####################################
+
 async def orm_add_note(session: AsyncSession, data: dict):
     obj = Note(
         title=data["title"],

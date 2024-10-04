@@ -5,8 +5,14 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
-from database.methods import orm_add_material, orm_get_materials, orm_get_material, orm_delete_material, orm_update_material
 
+from database.methods import (
+    orm_add_material,
+    orm_get_materials,
+    orm_get_material,
+    orm_delete_material,
+    orm_update_material
+)
 from database.engine import session_maker
 from keyboards.reply import get_keyboard
 from keyboards.inline import get_callback_btns
@@ -19,8 +25,12 @@ from middlewares.db import DataBaseSession
 material_router = Router()
 
 
-material_router.message.middleware(DataBaseSession(session_pool=session_maker))
-material_router.callback_query.middleware(DataBaseSession(session_pool=session_maker))
+material_router.message.middleware(
+    DataBaseSession(session_pool=session_maker)
+)
+material_router.callback_query.middleware(
+    DataBaseSession(session_pool=session_maker)
+)
 
 
 class AddMaterial(StatesGroup):
@@ -275,20 +285,29 @@ async def material_add_price_wrong(message: Message, state: FSMContext):
 
 
 @material_router.callback_query(F.data.startswith("delete_material_"))
-async def material_add_position(callback: CallbackQuery, session: AsyncSession):
+async def material_delete(callback: CallbackQuery, session: AsyncSession):
     record_id = callback.data.split("_")[-1]
     await orm_delete_material(session, int(record_id))
 
     await callback.answer("Материал удален")
     await callback.message.answer("Материал удален из базы данных.")
 
+# Zakladka
+@material_router.callback_query(F.data.startswith("menu_material_"))
+async def material_delete(callback: CallbackQuery, session: AsyncSession):
+    material_id = callback.data.split("_")[-1]
+    material = await orm_get_material(session, int(material_id))
+
+    # await callback.answer("Материал удален")
+    # await callback.message.answer("Материал удален из базы данных.")
+
 
 @material_router.message(F.text == "Спиок материалов")
-async def materials_add_list(message: Message, session: AsyncSession):
-    for material in await orm_get_materials(session):
-        await message.answer_photo(
-                photo=material.photo,
-                caption=(
+async def materials_list(message: Message, session: AsyncSession):
+    for number, material in enumerate(await orm_get_materials(session)):
+        await message.answer(
+                text=(
+                    f"Номер для выбора материала: <b>{number}\n</b>"
                     f"Название: <b>{material.title}\n</b>"
                     f"Описание: <b>{material.description}\n</b>"
                     f"Фасовка: <b>{material.packing}\n</b>"
@@ -297,9 +316,13 @@ async def materials_add_list(message: Message, session: AsyncSession):
                 ),
                 reply_markup=get_callback_btns(
                 btns={
-                        "Удалить": f"delete_material_{material.id}",
-                        "Изменить": f"change_material_{material.id}",
+                        "Подробнее": f"menu_material_{material.id}",
+                        # "Изменить": f"change_material_{material.id}",
                     }
+                # btns={
+                #         "Удалить": f"delete_material_{material.id}",
+                #         "Изменить": f"change_material_{material.id}",
+                #     }
                 ),
             )
     await message.answer(

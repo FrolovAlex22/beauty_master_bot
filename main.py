@@ -13,7 +13,7 @@ load_dotenv(find_dotenv())
 
 from config_data.config import Config, load_config
 from database.engine import create_db, drop_db
-from handlers import check_handlers, material_handlers, note_handlers, other_handlers, user_handlers, record_handlers
+from handlers import admin_handlers, check_handlers, material_handlers, note_handlers, other_handlers, user_handlers, record_handlers
 from keyboards.main_menu import set_main_menu
 
 # Инициализируем логгер
@@ -35,7 +35,7 @@ dp = Dispatcher(storage=storage)
 
 async def on_startup(bot):
 
-    run_param = False
+    run_param = True
     if run_param:
         await drop_db()
 
@@ -56,6 +56,7 @@ async def main():
 
     # Регистрируем роутеры в диспетчере
     dp.include_router(user_handlers.router)
+    dp.include_router(admin_handlers.admin_router)
     dp.include_router(record_handlers.record_router)
     dp.include_router(material_handlers.material_router)
     dp.include_router(note_handlers.note_router)
