@@ -1,5 +1,9 @@
 from aiogram.utils.formatting import Bold, as_list, as_marked_section
 
+CATEGORIES = [
+    'Кератин/Ботокс', 'Холодное востановление/Подложки', "Домашний уход"
+]
+
 DESCRIPTION_FOR_INFO_PAGES = {
     "main": "Добро пожаловать в бот мастера Лианы!",
     "about": (

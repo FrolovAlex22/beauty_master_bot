@@ -2,9 +2,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from config_data.config import DATABASE_URL
 from database.models import Base
+from database.methods import orm_add_banner_description, orm_create_categories
 from database.methods import orm_add_banner_description
-from database.methods import orm_add_banner_description
-from lexicon.text_for_db import DESCRIPTION_FOR_INFO_PAGES
+from lexicon.text_for_db import DESCRIPTION_FOR_INFO_PAGES, CATEGORIES
 
 
 async_engine = create_async_engine(DATABASE_URL, echo=True)
@@ -21,6 +21,7 @@ async def create_db():
         await conn.run_sync(Base.metadata.create_all)
 
     async with session_maker() as session:
+        await orm_create_categories(session, CATEGORIES)
         await orm_add_banner_description(session, DESCRIPTION_FOR_INFO_PAGES)
 
 

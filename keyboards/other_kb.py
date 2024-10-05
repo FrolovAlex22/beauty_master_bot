@@ -77,9 +77,17 @@ CHECK_KB = get_keyboard(
 )
 
 ADMIN_KB = get_keyboard(
-    # "Добавить товар",
+    "Добавить/Изменить запись",
     # "Ассортимент",
     "Добавить/Изменить баннер",
     placeholder="Выберите действие",
+    sizes=(2,),
+)
+
+CHANGE_RECORD_ADMIN = get_callback_btns(
+    btns={
+        "Добавить запись": "add_record",
+        "Изменить запись": "change_record",
+    },
     sizes=(2,),
 )

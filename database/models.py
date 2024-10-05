@@ -25,6 +25,13 @@ class User(Base):
     telegram_id : Mapped[int]
 
 
+class Category(Base):
+    __tablename__ = 'category'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
+
+
 class Banner(Base):
     __tablename__ = 'banner'
 
