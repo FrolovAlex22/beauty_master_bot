@@ -76,7 +76,7 @@ CHECK_KB = get_keyboard(
     sizes=(1, )
 )
 
-ADMIN_KB = get_keyboard(
+ADMIN_MENU_KB = get_keyboard(
     "Добавить/Изменить запись",
     # "Ассортимент",
     "Добавить/Изменить баннер",
@@ -87,7 +87,15 @@ ADMIN_KB = get_keyboard(
 CHANGE_RECORD_ADMIN = get_callback_btns(
     btns={
         "Добавить запись": "add_record",
-        "Изменить запись": "change_record",
+        "Изменить запись": "list_from_change_record",
+    },
+    sizes=(2,),
+)
+
+CHANGE_RECORD_AFTER_FILING = get_callback_btns(
+    btns={
+        "Добавить запись": "add_record",
+        "Список записей": "list_from_change_record",
     },
     sizes=(2,),
 )

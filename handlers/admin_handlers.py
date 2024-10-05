@@ -16,6 +16,7 @@ from database.methods import (
     # orm_delete_product,
     orm_get_info_pages,
     orm_get_record,
+    orm_get_records,
     orm_update_record,
     # orm_get_product,
     # orm_get_products,
@@ -30,7 +31,7 @@ from handlers.note_handlers import AddNotes
 from keyboards.inline import get_callback_btns
 from keyboards.my_calendar import CalendarMarkup
 from keyboards.reply import get_keyboard
-from keyboards.other_kb import ADMIN_KB, CHANGE_RECORD_ADMIN, CHANGE_RECORD_KB, RECORD_KB
+from keyboards.other_kb import ADMIN_KB, ADMIN_MENU_KB, CHANGE_RECORD_ADMIN, CHANGE_RECORD_AFTER_FILING, CHANGE_RECORD_KB, RECORD_KB
 from lexicon.lexicon_ru import LEXICON, LEXICON_CALENDAR
 from middlewares.db import DataBaseSession
 
@@ -44,10 +45,12 @@ admin_router.message.middleware(DataBaseSession(session_pool=session_maker))
 admin_router.callback_query.middleware(DataBaseSession(session_pool=session_maker))
 
 
-@admin_router.message(Command("admin"))
-@admin_router.message(F.text.casefold() == "назад в меню администратора")
-async def admin_features(message: Message):
-    await message.answer("<b>Меню администратора</b>", reply_markup=ADMIN_KB)
+@admin_router.message(StateFilter("*"), Command("admin"))
+@admin_router.message(StateFilter("*"), F.text.casefold() == "назад в меню администратора")
+@admin_router.message(StateFilter("*"), F.text.casefold() == "меню администратора")
+async def admin_features(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("<b>Меню администратора</b>", reply_markup=ADMIN_MENU_KB)
 
 
 @admin_router.message(F.text.casefold() == "добавить/изменить запись")
@@ -133,28 +136,6 @@ class AddRecord(StatesGroup):
         "AddRecord:phone_number": "Введите номер телефона заново:",
     }
 
-# Изменяем запись
-@admin_router.callback_query(StateFilter(None), F.data.startswith("change_record_"))
-async def change_record_callback(
-    callback: CallbackQuery, state: FSMContext, session: AsyncSession
-) -> None:
-    record_id = callback.data.split("_")[-1]
-
-    record_for_change = await orm_get_record(session, int(record_id))
-
-    AddRecord.record_for_change = record_for_change
-
-    current_date = datetime.now()
-    current_month = current_date.month
-    current_year = current_date.year
-
-    await callback.answer()
-    await callback.message.answer(
-        "Введите дату приема",
-        reply_markup=CalendarMarkup(current_month, current_year).build.kb
-        )
-    await state.set_state(AddRecord.date)
-
 # Возврат к предыдущему шагу во время зполнения FSM для засписей
 @admin_router.message(
         StateFilter("*"),
@@ -190,10 +171,11 @@ async def calendar_add_reception(
 # @admin_router.message(StateFilter(None), F.text == "Добавить запись")
 # async def calendar_add_reception(message: Message, state: FSMContext) -> None:
     await callback.message.delete()
+    print("YES")
     current_date = datetime.now()
     current_month = current_date.month
     current_year = current_date.year
-    await callback.answer(
+    await callback.message.answer(
         text=LEXICON['record_client'],
         reply_markup=CalendarMarkup(current_month, current_year).build.kb
     )
@@ -302,18 +284,64 @@ async def calendar_add_phone_number_client(
                 f"<b>Номер клиента:</b> {data["phone_number"]}\n"
                 f"<b>Дата приема клиента:</b> {data["date"]}"
             ),
-            reply_markup=RECORD_KB
+            reply_markup=CHANGE_RECORD_AFTER_FILING
         )
         await state.clear()
     except Exception as e:
-        await message.answer(f"Произошла ошибка: {e}", reply_markup=ADMIN_KB,)
+        await message.answer(
+            f"Произошла ошибка: {e}", reply_markup=ADMIN_MENU_KB,
+        )
         await state.clear()
 
-
-
+# Валидация вводимого номера
 @admin_router.message(AddRecord.phone_number)
 async def calendar_wrong_phone_number_client(
     message: Message,
     state: FSMContext
 ):
     await message.answer(LEXICON_CALENDAR["calendar_wrong_phone_number_client"])
+
+
+# Изменяем запись
+@admin_router.callback_query(StateFilter(None), F.data.startswith("change_record_"))
+async def change_record_callback(
+    callback: CallbackQuery, state: FSMContext, session: AsyncSession
+) -> None:
+    record_id = callback.data.split("_")[-1]
+
+    record_for_change = await orm_get_record(session, int(record_id))
+
+    AddRecord.record_for_change = record_for_change
+
+    current_date = datetime.now()
+    current_month = current_date.month
+    current_year = current_date.year
+
+    await callback.answer()
+    await callback.message.answer(
+        "Введите дату приема",
+        reply_markup=CalendarMarkup(current_month, current_year).build.kb
+        )
+    await state.set_state(AddRecord.date)
+
+# Список записей для изменения
+@admin_router.callback_query(F.data.startswith("list_from_change_record"))
+async def calendar_reception_list(callback: CallbackQuery, session: AsyncSession) -> None:
+    for record in await orm_get_records(session):
+        await callback.message.answer(
+            text=(
+                f"<b>Имя клиента:</b> {record.name}\n\n"
+                f"<b>Номер клиента:</b> {record.phone_number}\n"
+                f"<b>Дата приема клиента:</b> {record.date.strftime("%d/%m/%Y")}"
+            ),
+            reply_markup=get_callback_btns(
+                btns={
+                    "Удалить": f"delete_record_{record.id}",
+                    "Изменить": f"change_record_{record.id}",
+                }
+            ),
+        )
+    await callback.message.answer(
+        "ОК, вот список записей ⏫",
+        reply_markup=get_keyboard("меню администратора", "Главное меню", sizes=(2, ))
+    )
