@@ -1,6 +1,6 @@
 from datetime import datetime
-from sqlalchemy import Float, Numeric, String, Text, func, BigInteger
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import Numeric, String, Text, BigInteger, ForeignKey
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
@@ -60,6 +60,9 @@ class Material(Base):
     packing: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
     price: Mapped[int] = mapped_column(nullable=False)
     quantity: Mapped[int] = mapped_column(nullable=False)
+    category_id: Mapped[int] = mapped_column(ForeignKey('category.id', ondelete='CASCADE'), nullable=False)
+
+    category: Mapped['Category'] = relationship(backref='products')
 
 
 class Note(Base):

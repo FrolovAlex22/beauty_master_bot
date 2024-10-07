@@ -64,7 +64,6 @@ async def orm_add_record(session: AsyncSession, data: dict):
     await session.commit()
 
 
-
 async def orm_get_records(session: AsyncSession):
     query = select(Record)
     result = await session.execute(query)
@@ -78,10 +77,11 @@ async def orm_get_record(session: AsyncSession, record_id: int):
 
 
 async def orm_update_record(session: AsyncSession, record_id: int, data):
+    date = datetime.strptime(data["date"], '%d.%m.%Y')
     query = update(Record).where(Record.id == record_id).values(
         name=data["name"],
         phone_number=data["phone_number"],
-        date=data["date"],
+        date=date,
     )
     await session.execute(query)
     await session.commit()
