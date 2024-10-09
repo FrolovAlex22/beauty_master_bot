@@ -28,10 +28,12 @@ RECORD_KB = get_keyboard(
 )
 
 
-CHANGE_MATERIAL_KB = get_keyboard(
-        "Оставить как есть",
-        "Вернуться на шаг",
-        sizes=(1, ),
+CHANGE_MATERIAL_KB = get_callback_btns(
+    btns={
+        "Оставить как есть": "add_material_leave",
+        "Вернуться на шаг": "add_material_back",
+    },
+    sizes=(2, ),
 )
 
 
@@ -72,7 +74,7 @@ CHECK_KB = get_keyboard(
 ADMIN_MENU_KB = get_callback_btns(
     btns={
         "Календарь записей": "calendar_record",
-        "Мои материалы": "admin_change_material",
+        "Мои материалы": "admin_choise_material",
         "Добавить/Изменить баннер": "add_change_banner",
     },
     # "Мои записи",
@@ -124,11 +126,22 @@ RECORD_AFTER_LIST_RESORD = get_callback_btns(
 
 # КАТЕГОРИИ
 # Выбор категории
-CHANGE_CATEGORY_ADMIN = get_callback_btns(
+CHOISE_CATEGORY_ADMIN = get_callback_btns(
     btns={
-        "Кератин/Ботокс": "admin_ceratin_botoks",
-        "Холодное восттановление": "admin_cold_recovery",
-        "Домашний уход": "admin_home_care",
+        "Кератин/Ботокс": "admin ceratin_botox",
+        "Холодное восттановление": "admin cold_recovery",
+        "Домашний уход": "admin home_care",
+    },
+    sizes=(2,),
+)
+
+
+
+CHOISE_CATEGORY_FOR_CHANGE = get_callback_btns(
+    btns={
+        "Кератин/Ботокс": "list_material_chacnge ceratin_botox",
+        "Холодное восттановление": "list_material_chacnge cold_recovery",
+        "Домашний уход": "list_material_chacnge home_care",
     },
     sizes=(2,),
 )
@@ -140,6 +153,16 @@ MATERIAL_ADMIN = get_callback_btns(
         "Добавить составы": "add_material",
         "Список материалов": "admin_material_list",
         "Нужно докупить": "list_for_buy_material",
+        "Меню администратора": "admin_menu",
+    },
+    sizes=(2,),
+)
+
+
+MATERIAL_ADMIN_AFTER_ADD = get_callback_btns(
+    btns={
+        "Добавить составы": "add_material",
+        "Список материалов": "admin_material_list",
         "Меню администратора": "admin_menu",
     },
     sizes=(2,),

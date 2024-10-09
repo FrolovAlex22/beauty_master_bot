@@ -1,7 +1,6 @@
-from datetime import datetime
 from aiogram import F, Router
-from aiogram.types import InputMediaPhoto, Message, ReplyKeyboardRemove, CallbackQuery
-from aiogram.filters import Command, StateFilter
+from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
+from aiogram.filters import Command, StateFilter, or_f
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
@@ -18,7 +17,10 @@ from handlers.handlers_methods import get_media_banner
 from handlers.material_handlers import AddMaterial
 from handlers.note_handlers import AddNotes
 from handlers.record_handlers import AddRecord
-from keyboards.other_kb import ADMIN_KB, ADMIN_MENU_KB, ADD_OR_CHANGE_RECORD_ADMIN, CHANGE_CATEGORY_ADMIN, MATERIAL_ADMIN, SELECTION_AFTER_ADDING_BANNER
+from keyboards.other_kb import (
+    ADMIN_KB, ADMIN_MENU_KB, ADD_OR_CHANGE_RECORD_ADMIN, CHOISE_CATEGORY_FOR_CHANGE,
+    MATERIAL_ADMIN, SELECTION_AFTER_ADDING_BANNER
+)
 from middlewares.db import DataBaseSession
 
 
@@ -90,7 +92,7 @@ async def admin_records(callback: CallbackQuery, session: AsyncSession):
 
 
 @admin_router.callback_query(
-        StateFilter(None), F.data == "admin_change_material"
+        StateFilter(None), F.data == "admin_choise_material"
     )
 async def admin_records(callback: CallbackQuery, session: AsyncSession) -> None:
     """Вызов меню материалов для администратора"""
@@ -106,24 +108,7 @@ async def admin_records(callback: CallbackQuery, session: AsyncSession) -> None:
     )
 
 
-@admin_router.callback_query(
-        StateFilter(None), F.data == "admin_material_list"
-    )
-async def admin_material_category(callback: CallbackQuery, session: AsyncSession) -> None:
-    """Выбор категории материалов для администратора"""
-    await callback.answer()
-    media = await get_media_banner(session, menu_name="material_entries")
-    if not media:
-        await callback.message.answer(
-            "<b>Необходимо добавить баннер</b>", reply_markup=ADMIN_MENU_KB
-        )
-    await callback.message.edit_media(
-        media=media,
-        reply_markup=CHANGE_CATEGORY_ADMIN
-    )
-
-
-admin_router.message(StateFilter("*"), F.text.casefold() == "отмена")
+@admin_router.message(StateFilter("*"), F.text.casefold() == "отмена")
 async def cancel_handler(message: Message, state: FSMContext) -> None:
     """Отмена действия во время заполнения FSM"""
     current_state = await state.get_state()
@@ -150,8 +135,12 @@ class AddBanner(StatesGroup):
     image = State()
 
 
-@admin_router.callback_query(StateFilter(None), F.data == 'add_change_banner')
-@admin_router.callback_query(StateFilter(None), F.data == 'add_banner')
+# @admin_router.callback_query(StateFilter(None), F.data == 'add_change_banner')
+# @admin_router.callback_query(StateFilter(None), F.data == 'add_banner')
+@admin_router.callback_query(
+        StateFilter(None),
+        or_f(F.data == 'add_banner', F.data == 'add_change_banner')
+    )
 async def add_image2(
     callback: CallbackQuery, state: FSMContext, session: AsyncSession
 ):

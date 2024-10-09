@@ -21,6 +21,7 @@ async def create_db():
         await conn.run_sync(Base.metadata.create_all)
 
     async with session_maker() as session:
+        # Создаем таблицы
         await orm_create_categories(session, CATEGORIES)
         await orm_add_banner_description(session, DESCRIPTION_FOR_INFO_PAGES)
 

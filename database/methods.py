@@ -12,6 +12,11 @@ async def orm_get_categories(session: AsyncSession):
     result = await session.execute(query)
     return result.scalars().all()
 
+async def orm_get_category_by_name(session: AsyncSession, name: str):
+    query = select(Category).where(Category.name == name)
+    result = await session.execute(query)
+    return result.scalar()
+
 async def orm_create_categories(session: AsyncSession, categories: list):
     query = select(Category)
     result = await session.execute(query)
@@ -103,6 +108,7 @@ async def orm_add_material(session: AsyncSession, data: dict):
         packing=data["packing"],
         price=data["price"],
         quantity=data["quantity"],
+        category_id = data["category_name"],
     )
     session.add(obj)
     await session.commit()
@@ -119,6 +125,12 @@ async def orm_get_material(session: AsyncSession, material_id: int):
     query = select(Material).where(Material.id == material_id)
     result = await session.execute(query)
     return result.scalar()
+
+
+async def orm_get_material_by_category_id(session: AsyncSession, category_id: int):
+    query = select(Material).where(Material.category_id == category_id)
+    result = await session.execute(query)
+    return result.scalars().all()
 
 
 async def orm_update_material(session: AsyncSession, material_id: int, data):

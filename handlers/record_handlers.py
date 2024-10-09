@@ -32,7 +32,6 @@ record_router.message.middleware(DataBaseSession(session_pool=session_maker))
 record_router.callback_query.middleware(DataBaseSession(session_pool=session_maker))
 
 
-##################### Методы доступные администратору ##########################
 class AddRecord(StatesGroup):
     """FSM для добавления/изменения записей"""
     date = State()
@@ -94,7 +93,7 @@ async def calendar_add_reception(
 
 @record_router.callback_query(AddRecord.date)
 async def calendar_add_date(
-    callback: CallbackQuery, session: AsyncSession, state: FSMContext
+    callback: CallbackQuery, state: FSMContext
 ) -> None:
     """Ответ на нажатие кнопок календаря, вход в состояния ввода имени"""
     mes = callback.data
