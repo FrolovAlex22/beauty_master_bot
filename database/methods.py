@@ -114,9 +114,14 @@ async def orm_add_material(session: AsyncSession, data: dict):
     await session.commit()
 
 
-
 async def orm_get_materials(session: AsyncSession):
     query = select(Material)
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+async def orm_get_materials_purchase(session: AsyncSession):
+    query = select(Material).where(Material.quantity <= 1)
     result = await session.execute(query)
     return result.scalars().all()
 

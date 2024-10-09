@@ -13,13 +13,17 @@ from database.methods import (
     orm_get_materials,
     orm_get_material,
     orm_delete_material,
+    orm_get_materials_purchase,
     orm_update_material
 )
 from database.engine import session_maker
-from handlers.handlers_methods import get_media_banner
+from handlers.handlers_methods import collection_of_materials_list, get_media_banner
 from keyboards.reply import get_keyboard
 from keyboards.inline import get_callback_btns
-from keyboards.other_kb import ADMIN_MENU_KB, CHOISE_CATEGORY_ADMIN, CHANGE_MATERIAL_KB, ADMIN_KB, CHOISE_CATEGORY_FOR_CHANGE, MATERIAL_ADMIN_AFTER_ADD, MATERIAL_KB
+from keyboards.other_kb import (
+    ADMIN_MENU_KB, CHOISE_CATEGORY_ADMIN, ADMIN_KB, CHOISE_CATEGORY_FOR_CHANGE,
+    MATERIAL_ADMIN_AFTER_ADD
+)
 from lexicon.lexicon_ru import LEXICON, LEXICON_MATERIAL
 
 from middlewares.db import DataBaseSession
@@ -121,15 +125,20 @@ async def change_material_callback(
     AddMaterial.material_for_change = material_for_change
 
     await callback.answer()
-    await callback.bot.edit_message_caption(
-        chat_id=callback.message.chat.id,
-        message_id=callback.message.message_id,
-        caption="Выерите категорию материала",
-        reply_markup=CHOISE_CATEGORY_ADMIN
-    )
-    # await callback.message.answer(
-    #     "Выерите категорию материала", reply_markup=CHANGE_MATERIAL_KB
-    # )
+    if callback.message.photo:
+        await callback.bot.edit_message_caption(
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.message_id,
+            caption="Выерите категорию материала",
+            reply_markup=CHOISE_CATEGORY_ADMIN
+        )
+    else:
+        media = await get_media_banner(session, menu_name="material_entries")
+        await callback.message.answer_photo(
+            media.media,
+            media.caption,
+            reply_markup=CHOISE_CATEGORY_ADMIN
+        )
     await state.set_state(AddMaterial.category_name)
 
 
@@ -175,7 +184,7 @@ async def material_add_position(callback: CallbackQuery, state: FSMContext, sess
             reply_markup=CHOISE_CATEGORY_ADMIN
         )
     else:
-        await callback.message.answer()
+        await callback.answer()
         media = await get_media_banner(session, menu_name="material_entries")
         await callback.message.answer_photo(
             media.media,
@@ -428,7 +437,6 @@ async def material_delete(callback: CallbackQuery, session: AsyncSession):
     await callback.answer("Материал удален")
     await callback.message.answer("Материал удален из базы данных.")
 
-# # Zakladka
 # @material_router.callback_query(F.data.startswith("menu_material_"))
 # async def material_delete(callback: CallbackQuery, session: AsyncSession):
 #     material_id = callback.data.split("_")[-1]
@@ -438,34 +446,52 @@ async def material_delete(callback: CallbackQuery, session: AsyncSession):
 #     # await callback.message.answer("Материал удален из базы данных.")
 
 
-@material_router.message(F.text == "Спиок материалов")
-async def materials_list(message: Message, session: AsyncSession):
-    for material in await orm_get_materials(session):
-        await message.answer(
-                text=(
-                    f"Название: <b>{material.title}\n</b>"
-                    f"Описание: <b>{material.description}\n</b>"
-                    f"Фасовка: <b>{material.packing}\n</b>"
-                    f"Цена: <b>{material.price}\n</b>"
-                    f"Количество: <b>{material.quantity}\n</b>"
-                ),
-                reply_markup=get_callback_btns(
-                btns={
-                        "Подробнее": f"menu_material_{material.id}",
-                        # "Изменить": f"change_material_{material.id}",
-                    }
-                # btns={
-                #         "Удалить": f"delete_material_{material.id}",
-                #         "Изменить": f"change_material_{material.id}",
-                #     }
-                ),
-            )
-    await message.answer(
-        "ОК, вот список записей ⏫",
-        reply_markup=get_keyboard("Мои материалы", "Главное меню", sizes=(1, ))
-    )
+# @material_router.message(F.text == "Спиок материалов")
+# async def materials_list(message: Message, session: AsyncSession):
+#     for material in await orm_get_materials(session):
+#         await message.answer(
+#                 text=(
+#                     f"Название: <b>{material.title}\n</b>"
+#                     f"Описание: <b>{material.description}\n</b>"
+#                     f"Фасовка: <b>{material.packing}\n</b>"
+#                     f"Цена: <b>{material.price}\n</b>"
+#                     f"Количество: <b>{material.quantity}\n</b>"
+#                 ),
+#                 reply_markup=get_callback_btns(
+#                 btns={
+#                         "Подробнее": f"menu_material_{material.id}",
+#                         # "Изменить": f"change_material_{material.id}",
+#                     }
+#                 # btns={
+#                 #         "Удалить": f"delete_material_{material.id}",
+#                 #         "Изменить": f"change_material_{material.id}",
+#                 #     }
+#                 ),
+#             )
+#     await message.answer(
+#         "ОК, вот список записей ⏫",
+#         reply_markup=get_keyboard("Мои материалы", "Главное меню", sizes=(1, ))
+    # )
 
 
-@material_router.message(F.text == "Список для покупки")
-async def material_add_position(message: Message):
-    await message.answer(text=LEXICON['pass'], reply_markup=ADMIN_KB)
+@material_router.callback_query(F.data == "list_for_buy_material")
+async def material_buy_list(callback: CallbackQuery, session: AsyncSession):
+    """Получить список материалов для покупки"""
+    await callback.answer()
+    materials = await orm_get_materials_purchase(session)
+    material_list = await collection_of_materials_list(materials)
+        # await message.answer(
+        #     photo=data["photo"],
+        #     caption=(
+        #         f"<b>Материал добавлен в базу данных</b>\n"
+        #         f"Название: <b>{data["title"]}\n</b>"
+        #         f"Описание: <b>{data["description"]}\n</b>"
+        #         f"Фасовка: <b>{data["packing"]}\n</b>"
+        #         f"Цена: <b>{data["price"]}\n</b>"
+        #         f"Количество: <b>{data["quantity"]}\n</b>"
+        #         f"Категория: <b>{name}\n</b>"
+        #     ),
+        #     reply_markup=MATERIAL_ADMIN_AFTER_ADD
+        # )
+    await callback.message.answer(
+        f"Вот список для покпуки:\n\n{material_list}", reply_markup=MATERIAL_ADMIN_AFTER_ADD)

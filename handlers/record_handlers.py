@@ -127,6 +127,7 @@ async def calendar_wrong_name_client(message: Message, state: FSMContext):
 @record_router.message(AddRecord.name, F.text)
 async def calendar_add_name_client(message: Message, state: FSMContext):
     """Ввод имени, вход в состояние ввода номера телефона."""
+    await message.delete()
     if len(message.text) >= 30:
         await message.answer(LEXICON_CALENDAR["calendar_add_long_name"])
         return
@@ -144,6 +145,7 @@ async def calendar_add_name_client(message: Message, state: FSMContext):
 @record_router.message(AddRecord.name)
 async def calendar_wrong_name_client(message: Message, state: FSMContext):
     """Валидация вводимых имени"""
+    await message.delete()
     await message.answer(LEXICON_CALENDAR["calendar_wrong_name_client"])
 
 
@@ -154,6 +156,7 @@ async def calendar_add_phone_number_client(
     session: AsyncSession
 ):
     """Ввод номера телефона, завершение добавления записи."""
+    await message.delete()
     answer = message.text
     number = answer.replace("+", "").replace(" ", "")
     if message.text == "Оставить как есть" and AddRecord.record_for_change:

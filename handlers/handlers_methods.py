@@ -29,6 +29,18 @@ async def get_media_banner(session, menu_name):
 
     return image
 
+
+async def collection_of_materials_list(materials: dict):
+    if len(materials) == 0:
+        return "Список пуст"
+    materials_list = ""
+    for number, material in enumerate(materials):
+        materials_list += (
+            f"<b>{number+1}</b> .Название: <b>{material.title}</b>, Количество:"
+            f" <b>{material.quantity}</b>\n"
+        )
+    return materials_list
+
 # async def get_menu_content(
 #     session: AsyncSession,
 #     level: int,
