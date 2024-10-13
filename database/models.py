@@ -68,7 +68,9 @@ class Material(Base):
 class Note(Base):
     __tablename__ = "notes"
 
-    id : Mapped[int] = mapped_column(primary_key=True)
-    title : Mapped[str] = mapped_column(String(50), nullable=False)
-    description : Mapped[str] = mapped_column(Text, nullable=False)
-    photo : Mapped[str] = mapped_column(String(150), nullable=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    note_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    title: Mapped[str] = mapped_column(String(50), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    photo: Mapped[str] = mapped_column(String(150), nullable=True)
+    is_published: Mapped[bool] = mapped_column(nullable=False)

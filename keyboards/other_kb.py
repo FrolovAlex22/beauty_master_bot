@@ -74,7 +74,8 @@ CHECK_KB = get_keyboard(
 ADMIN_MENU_KB = get_callback_btns(
     btns={
         "Календарь записей": "calendar_record",
-        "Мои материалы": "admin_choise_material",
+        "Материалы": "admin_choise_material",
+        "Мои заметки": "admin_note",
         "Добавить/Изменить баннер": "add_change_banner",
     },
     # "Мои записи",
@@ -164,6 +165,70 @@ MATERIAL_ADMIN_AFTER_ADD = get_callback_btns(
         "Добавить составы": "add_material",
         "Список материалов": "admin_material_list",
         "Меню администратора": "admin_menu",
+    },
+    sizes=(2,),
+)
+
+# ЗАМЕТКИ
+# Выбор действия для заметок
+NOTE_ADMIN = get_callback_btns(
+    btns={
+        "Создать заметку": "add_note",
+        "Мои заметки": "admin_list_note",
+        "Опубликованные заметки": "admin_published_entries",
+        "Меню администратора": "admin_menu",
+    },
+    sizes=(2,),
+)
+
+
+NOTE_CHOISE_TYPE = get_callback_btns(
+    btns={
+        "Подробно о материалах": "note material_info",
+        "Полезно знать": "note good_to_know",
+    },
+    sizes=(2,),
+)
+
+
+NOTE_EDIT_CHOISE_TYPE = get_callback_btns(
+    btns={
+        "Оставить как есть": "note_leave_as_is",
+        "Вернуться на шаг назад": "note_step_back",
+    },
+    sizes=(2,),
+)
+
+
+NOTE_ADD_EDIT_PHOTO_STATE = get_keyboard(
+    "Пропустить",
+    "Оставить как есть",
+    sizes=(2, )
+)
+
+
+NOTE_LIST_CHOISE_TYPE = get_callback_btns(
+    btns={
+        "Подробно о материалах": "note_list material_info",
+        "Полезно знать": "note_list good_to_know",
+    },
+    sizes=(2,),
+)
+
+
+NOTE_ADMIN_AFTER_ADD = get_callback_btns(
+    btns={
+        "Создать заметку": "add_note",
+        "Мои заметки": "admin_list_note",
+        "Меню администратора": "admin_menu",
+    },
+    sizes=(2,),
+)
+
+NOTE_IS_PUBLISHED = get_callback_btns(
+    btns={
+        "Опубликовть": "publish_yes",
+        "Оставить как черновик": "publish_no",
     },
     sizes=(2,),
 )

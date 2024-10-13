@@ -132,6 +132,17 @@ async def orm_get_material(session: AsyncSession, material_id: int):
     return result.scalar()
 
 
+async def orm_get_material_by_title(
+        session: AsyncSession, material_title: str, material_packing: int
+    ):
+    query = select(Material).where(
+        Material.quantity == material_packing,
+        Material.title == material_title
+    )
+    result = await session.execute(query)
+    return result.scalar()
+
+
 async def orm_get_material_by_category_id(session: AsyncSession, category_id: int):
     query = select(Material).where(Material.category_id == category_id)
     result = await session.execute(query)
@@ -157,21 +168,38 @@ async def orm_delete_material(session: AsyncSession, material_id: int):
     await session.commit()
 
 
+async def material_fix_quantity(
+        session: AsyncSession, material_id: int, new_quantity: int
+    ):
+    query = update(Material).where(Material.id == material_id).values(
+        quantity=new_quantity
+    )
+    await session.execute(query)
+    await session.commit()
+
+
 ############### Работа с записями контента ####################################
 
 async def orm_add_note(session: AsyncSession, data: dict):
     obj = Note(
+        note_type = data["note_type"],
         title=data["title"],
         description=data["description"],
-        photo=data["photo"]
+        photo=data["photo"],
+        is_published = data["is_published"],
     )
     session.add(obj)
     await session.commit()
 
 
+async def orm_get_notes(session: AsyncSession, note_type: str):
+    query = select(Note).where(Note.note_type == note_type)
+    result = await session.execute(query)
+    return result.scalars().all()
 
-async def orm_get_notes(session: AsyncSession):
-    query = select(Note)
+
+async def orm_get_notes_is_published(session: AsyncSession):
+    query = select(Note).where(Note.is_published == True)
     result = await session.execute(query)
     return result.scalars().all()
 
@@ -184,9 +212,25 @@ async def orm_get_note(session: AsyncSession, note_id: int):
 
 async def orm_update_note(session: AsyncSession, note_id: int, data):
     query = update(Note).where(Note.id == note_id).values(
+        note_type = data["note_type"],
         title=data["title"],
         description=data["description"],
-        photo=data["photo"]
+        photo=data["photo"],
+        is_published=data["is_published"]
+    )
+    await session.execute(query)
+    await session.commit()
+
+
+async def orm_change_puplish_note(
+        session: AsyncSession, note_id: int, status: bool
+    ):
+    if status:
+        new_status = False
+    else:
+        new_status = True
+    query = update(Note).where(Note.id == note_id).values(
+        is_published=new_status
     )
     await session.execute(query)
     await session.commit()

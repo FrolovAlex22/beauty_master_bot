@@ -19,7 +19,7 @@ from handlers.note_handlers import AddNotes
 from handlers.record_handlers import AddRecord
 from keyboards.other_kb import (
     ADMIN_KB, ADMIN_MENU_KB, ADD_OR_CHANGE_RECORD_ADMIN, CHOISE_CATEGORY_FOR_CHANGE,
-    MATERIAL_ADMIN, SELECTION_AFTER_ADDING_BANNER
+    MATERIAL_ADMIN, NOTE_ADMIN, SELECTION_AFTER_ADDING_BANNER
 )
 from middlewares.db import DataBaseSession
 
@@ -62,6 +62,8 @@ async def admin_features_callback(
     await state.clear()
     await callback.answer()
     media = await get_media_banner(session, menu_name="admin")
+    if not media:
+        await callback.message.answer("Добавте баннер")
     try:
         await callback.message.edit_media(
             media=media,
@@ -108,6 +110,23 @@ async def admin_records(callback: CallbackQuery, session: AsyncSession) -> None:
     )
 
 
+@admin_router.callback_query(
+        StateFilter(None), F.data == "admin_note"
+    )
+async def admin_records(callback: CallbackQuery, session: AsyncSession) -> None:
+    """Вызов меню материалов для администратора"""
+    await callback.answer()
+    media = await get_media_banner(session, menu_name="information")
+    if not media:
+        await callback.message.answer(
+            "<b>Необходимо добавить баннер</b>", reply_markup=ADMIN_MENU_KB
+        )
+    await callback.message.edit_media(
+        media=media,
+        reply_markup=NOTE_ADMIN
+    )
+
+
 @admin_router.message(StateFilter("*"), F.text.casefold() == "отмена")
 async def cancel_handler(message: Message, state: FSMContext) -> None:
     """Отмена действия во время заполнения FSM"""
@@ -126,7 +145,7 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
             state = None
 
     await state.clear()
-    await message.answer("Действия отменены", reply_markup=ADMIN_KB)
+    await message.answer("Действия отменены", reply_markup=ADMIN_MENU_KB)
 
 
 ################# Микро FSM для загрузки/изменения баннеров ###################
@@ -135,8 +154,6 @@ class AddBanner(StatesGroup):
     image = State()
 
 
-# @admin_router.callback_query(StateFilter(None), F.data == 'add_change_banner')
-# @admin_router.callback_query(StateFilter(None), F.data == 'add_banner')
 @admin_router.callback_query(
         StateFilter(None),
         or_f(F.data == 'add_banner', F.data == 'add_change_banner')
