@@ -501,7 +501,6 @@ async def choise_material_list_for_change_callback(
 ):
     await callback.answer()
     category = await orm_get_category_by_name(session, callback.data.split(" ")[-1])
-
     for material in await orm_get_material_by_category_id(session, int(category.id)):
         await callback.message.answer(
             text=(
