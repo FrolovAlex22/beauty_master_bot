@@ -25,7 +25,7 @@ from keyboards.reply import get_keyboard
 from keyboards.inline import get_callback_btns
 from keyboards.other_kb import (
     ADMIN_MENU_KB, CHOISE_CATEGORY_ADMIN, ADMIN_KB, CHOISE_CATEGORY_FOR_CHANGE,
-    MATERIAL_ADMIN_AFTER_ADD
+    MATERIAL_ADMIN_AFTER_ADD, MATERIAL_ADMIN_CHOISE_FOR_EDIT
 )
 from lexicon.lexicon_ru import LEXICON, LEXICON_MATERIAL
 
@@ -47,6 +47,7 @@ class MaterialCallBack(CallbackData, prefix="material"):
     quantity_material: int = None
     title:str
     description:str
+    packing:float
     price:int
     action: str
     material_id: int
@@ -64,7 +65,7 @@ class AddMaterial(StatesGroup):
 
     material_for_change = None
 
-    texts = {
+    texts_back = {
         "AddMaterial:category_name": "выберите категорию заново.",
         "AddMaterial:title": "Введите название заново.",
         "AddMaterial:description": "Введите описание заново.",
@@ -73,6 +74,116 @@ class AddMaterial(StatesGroup):
         "AddMaterial:price": "Введите цену заново.",
         "AddMaterial:quantity": "Введите количество заново.",
     }
+
+    texts_leave_as_is = {
+        "AddMaterial:category_name": "Выберите категорию",
+        "AddMaterial:title": "Введите описание материала",
+        "AddMaterial:description": "Отправте изображение материала",
+        "AddMaterial:photo": "Укажите фасовку материала",
+        "AddMaterial:packing": "Введите цену материала",
+        "AddMaterial:price": "Количество материала в наличие",
+        "AddMaterial:quantity": "Данные о материале обновленны",
+    }
+
+
+@material_router.callback_query(
+        StateFilter("*"), F.data == "material_step_back"
+    )
+async def note_back_step_handler(
+    callback: CallbackQuery, state: FSMContext
+) -> None:
+    current_state = await state.get_state()
+
+
+    if current_state == AddMaterial.category_name:
+        await callback.message.answer(
+            "Предидущего шага нет, нужно выбрать категорию",
+        )
+        return
+
+    previous = None
+    for step in AddMaterial.__all_states__:
+
+        if step.state == current_state:
+            await state.set_state(previous)
+            if previous.state == AddMaterial.category_name:
+                keyboard = CHOISE_CATEGORY_ADMIN
+            else:
+                keyboard = MATERIAL_ADMIN_CHOISE_FOR_EDIT
+            await callback.message.answer(
+                "Ок, вы вернулись к прошлому шагу \n"
+                f" {AddMaterial.texts_back[previous.state]}"
+                , reply_markup=keyboard
+            )
+            return
+        previous = step
+
+
+@material_router.callback_query(
+        StateFilter("*"),
+        F.data == "material_leave_as_is",
+        )
+async def note_back_step_handler(
+    callback: CallbackQuery, state: FSMContext, session: AsyncSession
+) -> None:
+    """Возвратна шаг назад при заполнении FSM Note"""
+    current_state = await state.get_state()
+
+    if current_state == AddMaterial.quantity:
+        keyboard = MATERIAL_ADMIN_AFTER_ADD
+    # elif current_state == AddNotes.description:
+    #     keyboard = NOTE_ADD_EDIT_PHOTO_STATE
+    else:
+        keyboard = MATERIAL_ADMIN_CHOISE_FOR_EDIT
+
+    if current_state == AddMaterial.material_for_change:
+        await state.update_data(
+            category_name=AddMaterial.material_for_change.category_name
+        )
+        await state.set_state(AddMaterial.title)
+    elif current_state == AddMaterial.title:
+        await state.update_data(title=AddMaterial.material_for_change.title)
+        await state.set_state(AddMaterial.description)
+    elif current_state == AddMaterial.description:
+        await state.update_data(description=AddMaterial.material_for_change.description)
+        await state.set_state(AddMaterial.photo)
+    elif current_state == AddMaterial.photo:
+        await state.update_data(photo=AddMaterial.material_for_change.photo)
+        await state.set_state(AddMaterial.packing)
+    elif current_state == AddMaterial.packing:
+        await state.update_data(packing=AddMaterial.material_for_change.packing)
+        await state.set_state(AddMaterial.price)
+    elif current_state == AddMaterial.price:
+        await state.update_data(price=AddMaterial.material_for_change.price)
+        await state.set_state(AddMaterial.quantity)
+    elif current_state == AddMaterial.quantity:
+        await state.update_data(quantity=AddMaterial.material_for_change.quantity)
+        data = await state.get_data()
+        await orm_update_material(
+                session, AddMaterial.material_for_change.id, data
+            )
+        await callback.message.answer_photo(
+            data["photo"],
+            caption=(
+                f"<b>Материал изменен в базе данных</b>\n"
+                f"Название: <b>{data["title"]}\n</b>"
+                f"Описание: <b>{data["description"]}\n</b>"
+                f"Фасовка: <b>{data["packing"]}\n</b>"
+                f"Цена: <b>{data["price"]}\n</b>"
+                f"Количество: <b>{data["quantity"]}\n</b>"
+                f"Категория: <b>{data["category_name"]}\n</b>"
+            ),
+            reply_markup=keyboard
+        )
+        await state.clear()
+
+    if current_state != AddMaterial.quantity:
+        await callback.message.answer(
+            "Оставили как есть.\n"
+            f"{AddMaterial.texts_leave_as_is[current_state]}",
+            reply_markup=keyboard
+        )
+
 
 @material_router.callback_query(
         StateFilter(None), F.data == "admin_material_list"
@@ -99,7 +210,7 @@ async def admin_material_category(callback: CallbackQuery, session: AsyncSession
 
 
 @material_router.callback_query(
-        StateFilter(None), F.data.startswith("change_material_")
+        F.data.startswith("change_material_"),
     )
 async def change_material_callback(
     callback: CallbackQuery, state: FSMContext, session: AsyncSession
@@ -195,12 +306,23 @@ async def material_add_category(
     # сделать метод получениЯ  ид категории, по callback.data
     name = callback.data.split(" ")[1]
     await state.update_data(category_name=name)
-    await callback.bot.edit_message_caption(
+    if AddMaterial.material_for_change:
+        keyboard = MATERIAL_ADMIN_CHOISE_FOR_EDIT
+    else:
+        keyboard = None
+    if callback.message.photo:
+        await callback.bot.edit_message_caption(
 
-        chat_id=callback.message.chat.id,
-        message_id=callback.message.message_id,
-        caption=LEXICON_MATERIAL["material_add"],
-    )
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.message_id,
+            caption=LEXICON_MATERIAL["material_add"],
+            reply_markup=keyboard
+        )
+    else:
+        await callback.message.answer(
+            LEXICON_MATERIAL["material_add"],
+            reply_markup=keyboard
+        )
     # await message.answer(LEXICON_MATERIAL["material_add_input_description"])
     await state.set_state(AddMaterial.title)
 
@@ -223,10 +345,14 @@ async def material_add_position_title(message: Message, state: FSMContext):
     #         caption=LEXICON_MATERIAL["material_add_input_description"],
     #         reply_markup=CHANGE_MATERIAL_KB
     #     )
-
+    if AddMaterial.material_for_change:
+        keyboard = MATERIAL_ADMIN_CHOISE_FOR_EDIT
+    else:
+        keyboard = None
     await state.update_data(title=message.text)
     await message.answer(
         LEXICON_MATERIAL["material_add_input_description"],
+        reply_markup=keyboard
     )
     # await message.answer(LEXICON_MATERIAL["material_add_input_description"])
     await state.set_state(AddMaterial.description)
@@ -254,9 +380,15 @@ async def material_add_position_description(message: Message, state: FSMContext)
     #         LEXICON_MATERIAL["material_add_input_photo"],
     #         reply_markup=CHANGE_MATERIAL_KB
     #         )
+    if AddMaterial.material_for_change:
+        keyboard = MATERIAL_ADMIN_CHOISE_FOR_EDIT
+    else:
+        keyboard = None
     await state.update_data(description=message.text)
     await message.delete()
-    await message.answer(LEXICON_MATERIAL["material_add_input_photo"],
+    await message.answer(
+        LEXICON_MATERIAL["material_add_input_photo"],
+        reply_markup=keyboard
     )
     # await message.answer(LEXICON_MATERIAL["material_add_input_photo"])
     await state.set_state(AddMaterial.photo)
@@ -283,9 +415,16 @@ async def material_add_position_photo(message: Message, state: FSMContext):
     #         LEXICON_MATERIAL["material_add_input_packing"],
     #         reply_markup=CHANGE_MATERIAL_KB
     #         )
+    if AddMaterial.material_for_change:
+        keyboard = MATERIAL_ADMIN_CHOISE_FOR_EDIT
+    else:
+        keyboard = None
     await message.delete()
     await state.update_data(photo=message.photo[-1].file_id)
-    await message.answer(LEXICON_MATERIAL["material_add_input_packing"])
+    await message.answer(
+        LEXICON_MATERIAL["material_add_input_packing"],
+        reply_markup=keyboard
+        )
     # await message.answer(
     #     LEXICON_MATERIAL["material_add_input_packing"]
     # )
@@ -310,11 +449,18 @@ async def material_add_position_packing(message: Message, state: FSMContext):
     #         LEXICON_MATERIAL["material_add_input_price"],
     #         reply_markup=CHANGE_MATERIAL_KB
     #     )
+    if AddMaterial.material_for_change:
+        keyboard = MATERIAL_ADMIN_CHOISE_FOR_EDIT
+    else:
+        keyboard = None
     await message.delete()
     answer = message.text.replace(",", ".")
     if float(answer):
         await state.update_data(packing=float(answer))
-        await message.answer(LEXICON_MATERIAL["material_add_input_price"])
+        await message.answer(
+            LEXICON_MATERIAL["material_add_input_price"]
+            , reply_markup=keyboard
+        )
         # await message.answer(
         #     LEXICON_MATERIAL["material_add_input_price"]
         # )
@@ -342,11 +488,18 @@ async def material_add_position_price(message: Message, state: FSMContext):
     #         LEXICON_MATERIAL["material_add_input_quantity"],
     #         reply_markup=CHANGE_MATERIAL_KB
     #     )
+    if AddMaterial.material_for_change:
+        keyboard = MATERIAL_ADMIN_CHOISE_FOR_EDIT
+    else:
+        keyboard = None
     await message.delete()
     if message.text.isdigit():
         await state.update_data(price=int(message.text))
     else:
-        await message.answer(LEXICON_MATERIAL["material_add_price_wrong"])
+        await message.answer(
+            LEXICON_MATERIAL["material_add_price_wrong"],
+            reply_markup=keyboard
+        )
         # await message.answer(LEXICON_MATERIAL["material_add_price_wrong"])
         return
     await message.answer(LEXICON_MATERIAL["material_add_input_quantity"])
@@ -511,27 +664,38 @@ async def choise_material_list_for_change_callback(
                 f"<b>Количество:</b> {material.quantity}\n"
             ),
             reply_markup=get_callback_btns(
-                btns={
-                    "Убавить -1": MaterialCallBack(
-                        action="minus_material",
-                        material_id=material.id,
-                        title=material.title,
-                        description=material.description,
-                        price=material.price,
-                        quantity_material=material.quantity,
-                    ).pack(),
-                    "Прибавить +1": MaterialCallBack(
-                        action="plus_material",
-                        material_id=material.id,
-                        title=material.title,
-                        description=material.description,
-                        price=material.price,
-                        quantity_material=material.quantity,
-                    ).pack(),
-                    "Удалить": f"delete_material_{material.id}",
-                    "Изменить": f"change_material_{material.id}",
-                }
-            ),
+            btns={
+                "Убавить -1": MaterialCallBack(
+                    action="minus_material",
+                    material_id=material.id,
+                    title=material.title,
+                    description=material.description,
+                    price=material.price,
+                    quantity_material=material.quantity,
+                    packing=material.packing
+                ).pack(),
+                "Прибавить +1": MaterialCallBack(
+                    action="plus_material",
+                    material_id=material.id,
+                    title=material.title,
+                    description=material.description,
+                    price=material.price,
+                    quantity_material=material.quantity,
+                    packing=material.packing
+                ).pack(),
+                "Удалить": f"delete_material_{material.id}",
+                "Изменить": f"change_material_{material.id}",
+                # "Изменить": MaterialCallBack(
+                #     action=f"change_material_{material.id}",
+                #     material_id=material.id,
+                #     title=material.title,
+                #     description=material.description,
+                #     price=material.price,
+                #     quantity_material=material.quantity,
+                #     packing=material.packing
+                # ).pack(),
+            }
+        ),
         )
     await callback.message.answer(
         f"ОК, вот список материалов категории {callback.data.split(" ")[-1]}⏫",
@@ -541,7 +705,12 @@ async def choise_material_list_for_change_callback(
 
 
 
-@material_router.callback_query(MaterialCallBack.filter())
+@material_router.callback_query(
+        MaterialCallBack.filter(F.action=="plus_material")
+    )
+@material_router.callback_query(
+        MaterialCallBack.filter(F.action=="minus_material")
+    )
 async def change_in_material_quantity(
     callback: CallbackQuery,
     callback_data: MaterialCallBack,
@@ -585,6 +754,7 @@ async def change_in_material_quantity(
                     description=callback_data.description,
                     price=callback_data.price,
                     quantity_material=new_quantity,
+                    packing=callback_data.packing
                 ).pack(),
                 "Прибавить +1": MaterialCallBack(
                     action="plus_material",
@@ -593,9 +763,19 @@ async def change_in_material_quantity(
                     description=callback_data.description,
                     price=callback_data.price,
                     quantity_material=new_quantity,
+                    packing=callback_data.packing
                 ).pack(),
                 "Удалить": f"delete_material_{callback_data.material_id}",
                 "Изменить": f"change_material_{callback_data.material_id}",
+                # "Изменить": MaterialCallBack(
+                #     action=f"change_material_{callback_data.material_id}",
+                #     material_id=callback_data.material_id,
+                #     title=callback_data.title,
+                #     description=callback_data.description,
+                #     price=callback_data.price,
+                #     quantity_material=new_quantity,
+                #     packing=callback_data.packing
+                # ).pack(),
             }
         ),
     )

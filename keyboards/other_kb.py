@@ -1,3 +1,5 @@
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from handlers.handlers_methods import MaterialCallBack
 from keyboards.reply import get_keyboard
 from keyboards.inline import get_callback_btns
 from aiogram.types import KeyboardButton
@@ -167,6 +169,15 @@ MATERIAL_ADMIN_AFTER_ADD = get_callback_btns(
         "Меню администратора": "admin_menu",
     },
     sizes=(2,),
+)
+
+
+MATERIAL_ADMIN_CHOISE_FOR_EDIT = get_callback_btns(
+    btns={
+        "Оставить как есть": "material_leave_as_is",
+        "Вернуться на шаг назад": "material_step_back",
+        },
+    sizes=(2,)
 )
 
 # ЗАМЕТКИ

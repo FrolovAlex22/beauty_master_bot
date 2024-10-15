@@ -1,5 +1,7 @@
+from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InputMediaPhoto
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 from database.methods import (
     # orm_add_to_cart,
@@ -18,6 +20,16 @@ from database.methods import (
 # )
 
 # from utils.paginator import Paginator
+
+
+class MaterialCallBack(CallbackData, prefix="material"):
+    quantity_material: int = None
+    title:str
+    description:str
+    packing:float
+    price:int
+    action: str
+    material_id: int
 
 
 # Получить изображение и описание баннера

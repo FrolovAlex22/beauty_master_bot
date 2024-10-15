@@ -42,11 +42,39 @@ class AddNotes(StatesGroup):
     }
 
     texts_leave_as_is = {
-        "AddNotes:note_type": "Введите название заметки",
+        "AddNotes:note_type": "Введите тип заметки",
         "AddNotes:title": "Введите описание заметки",
         "AddNotes:description": "Отправте изображение заметки",
         "AddNotes:photo": "Запись обновлена",
     }
+
+
+@note_router.message(
+        AddNotes.photo, or_f(
+            F.photo,
+            F.text.casefold() == "пропустить",
+            F.text.casefold() == "оставить как есть"
+        )
+    )
+async def notes_add_image(message: Message,state: FSMContext,session: AsyncSession
+):
+    if message.photo:
+        await state.update_data(photo=message.photo[-1].file_id)
+    else:
+        if message.text.casefold() == "пропустить":
+            await state.update_data(photo=None)
+        elif message.text.casefold() == "оставить как есть" and AddNotes.note_for_change:
+            await state.update_data(photo=AddNotes.note_for_change.photo)
+    await message.answer(
+        text="<b>Изображение добавлено</b>\n",
+        reply_markup=ReplyKeyboardRemove()
+    )
+    await message.answer(
+        text="Опубликовать заметку?",
+        reply_markup=NOTE_IS_PUBLISHED
+    )
+    await state.set_state(AddNotes.is_published)
+
 
 @note_router.callback_query(StateFilter("*"), F.data == "note_step_back")
 async def note_back_step_handler(
@@ -63,15 +91,16 @@ async def note_back_step_handler(
 
     previous = None
     for step in AddNotes.__all_states__:
-        if current_state == AddNotes.note_type:
-            keyboard = NOTE_CHOISE_TYPE
-        else:
-            keyboard = NOTE_EDIT_CHOISE_TYPE
+
         if step.state == current_state:
             await state.set_state(previous)
+            if previous.state == AddNotes.note_type:
+                keyboard = NOTE_CHOISE_TYPE
+            else:
+                keyboard = NOTE_EDIT_CHOISE_TYPE
             await callback.message.answer(
                 "Ок, вы вернулись к прошлому шагу \n"
-                f" {AddNotes.texts[previous.state]}"
+                f" {AddNotes.texts_back[previous.state]}"
                 , reply_markup=keyboard
             )
             return
@@ -109,11 +138,12 @@ async def notes_add_type_choise_callback(
     note_type = callback.data.split(" ")[-1]
     await state.update_data(note_type=note_type)
     if AddNotes.note_for_change:
-        keyboard = NOTE_ADD_EDIT_PHOTO_STATE
+        keyboard = NOTE_EDIT_CHOISE_TYPE
     else:
         keyboard = None
-    await callback.message.edit_caption(
-        caption=LEXICON_NOTES["notes_add_title"],
+    await callback.message.delete()
+    await callback.message.answer(
+        LEXICON_NOTES["notes_add_title"],
         reply_markup=keyboard
     )
 
@@ -202,33 +232,6 @@ async def notes_add_description(message: Message, state: FSMContext):
 @note_router.message(AddNotes.description)
 async def notes_add_description_wrong(message: Message, state: FSMContext):
     await message.answer(LEXICON_NOTES["notes_add_description_wrong"])
-
-
-@note_router.message(
-        AddNotes.photo, or_f(
-            F.photo,
-            F.text.casefold() == "пропустить",
-            F.text.casefold() == "оставить как есть"
-        )
-    )
-async def notes_add_image(message: Message,state: FSMContext,session: AsyncSession
-):
-    if message.photo:
-        await state.update_data(photo=message.photo[-1].file_id)
-    else:
-        if message.text.casefold() == "пропустить":
-            await state.update_data(photo=None)
-        elif message.text.casefold() == "оставить как есть" and AddNotes.note_for_change:
-            await state.update_data(photo=AddNotes.note_for_change.photo)
-    await message.answer(
-        text="<b>Изображение добавлено</b>\n",
-        reply_markup=ReplyKeyboardRemove()
-    )
-    await message.answer(
-        text="Опубликовать заметку?",
-        reply_markup=NOTE_IS_PUBLISHED
-    )
-    await state.set_state(AddNotes.is_published)
 
 
 @note_router.message(AddNotes.photo)
