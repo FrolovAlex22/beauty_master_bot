@@ -13,6 +13,7 @@ from database.methods import (
     orm_update_record
 )
 from database.engine import session_maker
+from filters.is_admin import ChatTypeFilter, IsAdmin
 from handlers.material_handlers import AddMaterial
 from handlers.note_handlers import AddNotes
 from keyboards.my_calendar import CalendarMarkup
@@ -27,6 +28,8 @@ from middlewares.db import DataBaseSession
 
 
 record_router = Router()
+
+record_router.message.filter(IsAdmin())
 
 record_router.message.middleware(DataBaseSession(session_pool=session_maker))
 record_router.callback_query.middleware(DataBaseSession(session_pool=session_maker))

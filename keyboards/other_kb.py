@@ -2,7 +2,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from handlers.handlers_methods import MaterialCallBack
 from keyboards.reply import get_keyboard
 from keyboards.inline import get_callback_btns
-from aiogram.types import KeyboardButton
+from aiogram.types import KeyboardButton, KeyboardButton, ReplyKeyboardMarkup
 
 # Основное меню для пользователя
 ADMIN_KB = get_keyboard(
@@ -72,7 +72,7 @@ CHECK_KB = get_keyboard(
 )
 
 
-# КЛАВИАТУРЫ ДЛЯ АДМИНИСТРАТОРА!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# АДМИНИСТРАТОР
 ADMIN_MENU_KB = get_callback_btns(
     btns={
         "Календарь записей": "calendar_record",
@@ -86,6 +86,47 @@ ADMIN_MENU_KB = get_callback_btns(
     # "Добавить/Изменить баннер",
     sizes=(2,),
 )
+
+
+# ПОЛЬЗОВАТЕЛЬ
+USER_MENU_KB = get_callback_btns(
+    btns={
+        "Записи клиентов": "user_record",
+        "Материалы для домашнего ухода": "my_material",
+        "Полезная информация от мастера": "my_note",
+    },
+    sizes=(2,),
+)
+
+
+USER_RECORD_KB = get_callback_btns(
+    btns={
+        "Посмотреть дни в которые есть запись": "user_record_list",
+        "Оставить заявку на прием": "user_record_bid",
+        "Вернуться в главное меню": "main_menu",
+    },
+    sizes=(2,),
+)
+
+
+USER_SENDING_CONTACT_KB = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton(
+                text="☎️Отправить номер для связи",
+                request_contact=True
+            ),
+        ],
+    ],
+    resize_keyboard=True
+)
+
+# USER_SENDING_CONTACT_KB = get_keyboard(
+#     "Отправить",
+#     "dthyenmcz",
+#     request_contact=0,
+#     sizes=(1,),
+# )
 
 # БАНЕРЫ
 # Выбор после добавления банера

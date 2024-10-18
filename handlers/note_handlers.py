@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.methods import orm_add_note, orm_change_puplish_note, orm_get_notes, orm_get_note, orm_delete_note, orm_get_notes_is_published, orm_update_note
 
 from database.engine import session_maker
+from filters.is_admin import ChatTypeFilter, IsAdmin
 from handlers.handlers_methods import get_media_banner
 from keyboards.reply import get_keyboard
 from keyboards.inline import get_callback_btns
@@ -19,6 +20,8 @@ from middlewares.db import DataBaseSession
 
 
 note_router = Router()
+
+note_router.message.filter(IsAdmin())
 
 
 note_router.message.middleware(DataBaseSession(session_pool=session_maker))
@@ -108,7 +111,9 @@ async def note_back_step_handler(
 
 
 @note_router.callback_query(StateFilter(None), F.data == "add_note")
-async def notes_add(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
+async def notes_add(
+    callback: CallbackQuery, state: FSMContext, session: AsyncSession
+):
     await callback.answer()
     if callback.message.photo:
         await callback.bot.edit_message_caption(

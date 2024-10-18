@@ -13,6 +13,7 @@ from database.methods import (
     orm_get_info_pages,
 )
 
+from filters.is_admin import ChatTypeFilter, IsAdmin
 from handlers.handlers_methods import get_media_banner
 from handlers.material_handlers import AddMaterial
 from handlers.note_handlers import AddNotes
@@ -28,6 +29,7 @@ from middlewares.db import DataBaseSession
 admin_router = Router()
 # admin_router.message.filter(ChatTypeFilter(["private"]), IsAdmin())
 
+admin_router.message.filter(IsAdmin())
 
 admin_router.message.middleware(DataBaseSession(session_pool=session_maker))
 admin_router.callback_query.middleware(DataBaseSession(session_pool=session_maker))

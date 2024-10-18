@@ -1,3 +1,6 @@
+from aiogram.utils.formatting import Bold, as_marked_section
+
+
 LEXICON_COMMANDS: dict[str, str] = {
     "/main_menu": "Вернутся в главное меню",
     "/help": "Справка по работе бота",
@@ -123,6 +126,15 @@ LEXICON_MATERIAL: dict[str, str] = {
     "material_add_title_exists": (
         "Материал с таким названием, и фасовкой. Уже существует"
     ),
+
+    "user_action_selection": as_marked_section(
+        Bold("Меню записей:"),
+        "Список бронированных записей",
+        "Оставить заявку на запись",
+        marker="✅ ",
+    ).as_html(),
+
+    "user_check_date": "<b>Выберите дату приема</b>",
 }
 
 LEXICON_NOTES: dict[str, str] = {

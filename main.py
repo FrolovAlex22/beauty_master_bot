@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -32,6 +33,8 @@ bot = Bot(
 )
 dp = Dispatcher(storage=storage)
 
+bot.my_admins_list = [os.getenv('ADMIN_IDS')]
+
 
 async def on_startup(bot):
 
@@ -56,7 +59,7 @@ async def main():
     await set_main_menu(bot)
 
     # Регистрируем роутеры в диспетчере
-    dp.include_router(user_handlers.router)
+    dp.include_router(user_handlers.user_router)
     dp.include_router(admin_handlers.admin_router)
     dp.include_router(record_handlers.record_router)
     dp.include_router(material_handlers.material_router)

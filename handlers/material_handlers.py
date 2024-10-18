@@ -1,5 +1,4 @@
 from aiogram import F, Router
-from aiogram.types import ReplyKeyboardRemove
 from aiogram.filters import StateFilter, or_f
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
@@ -20,6 +19,7 @@ from database.methods import (
     orm_update_material
 )
 from database.engine import session_maker
+from filters.is_admin import ChatTypeFilter, IsAdmin
 from handlers.handlers_methods import collection_of_materials_list, get_media_banner
 from keyboards.reply import get_keyboard
 from keyboards.inline import get_callback_btns
@@ -34,6 +34,7 @@ from middlewares.db import DataBaseSession
 
 material_router = Router()
 
+material_router.message.filter(IsAdmin())
 
 material_router.message.middleware(
     DataBaseSession(session_pool=session_maker)
@@ -93,7 +94,6 @@ async def note_back_step_handler(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
     current_state = await state.get_state()
-
 
     if current_state == AddMaterial.category_name:
         await callback.message.answer(

@@ -53,20 +53,9 @@ async def collection_of_materials_list(materials: dict):
         )
     return materials_list
 
-# async def get_menu_content(
-#     session: AsyncSession,
-#     level: int,
-#     menu_name: str,
-#     category: int | None = None,
-#     page: int | None = None,
-#     product_id: int | None = None,
-#     user_id: int | None = None,
-# ):
-#     if level == 0:
-#         return await main_menu(session, level, menu_name)
-#     elif level == 1:
-#         return await catalog(session, level, menu_name)
-#     elif level == 2:
-#         return await products(session, level, category, page)
-#     elif level == 3:
-#         return await carts(session, level, menu_name, page, user_id, product_id)
+
+async def client_reception_in_the_list(records: tuple):
+    text = "Дни в которые уже есть записи:\n\n"
+    for record in records:
+        text += f"<b>{record.date.strftime('%d.%m.%Y')}</b>\n"
+    return text

@@ -5,7 +5,7 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 def get_keyboard(
     *btns: str | tuple[str | KeyboardButton] | KeyboardButton,
     placeholder: str = None,
-    # request_contact: int = None,
+    request_contact: int = None,
     # request_location: int = None,
     sizes: tuple[int] = (2,),
 ):
@@ -27,12 +27,12 @@ def get_keyboard(
 
     for index, text in enumerate(btns, start=0):
 
-        # if request_contact and request_contact == index:
-        #     keyboard.add(KeyboardButton(text=text, request_contact=True))
+        if request_contact and request_contact == index:
+            keyboard.add(KeyboardButton(text=text, request_contact=True))
 
         # elif request_location and request_location == index:
         #     keyboard.add(KeyboardButton(text=text, request_location=True))
-        # else:
+        else:
             keyboard.add(KeyboardButton(text=text))
 
     return keyboard.adjust(*sizes).as_markup(
