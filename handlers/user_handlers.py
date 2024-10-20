@@ -2,6 +2,7 @@ from datetime import datetime
 import os
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
+from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, CallbackQuery, InputMediaPhoto, ContentType, ReplyKeyboardRemove, Contact
@@ -23,7 +24,6 @@ user_router.message.middleware(DataBaseSession(session_pool=session_maker))
 user_router.callback_query.middleware(DataBaseSession(session_pool=session_maker))
 
 
-
 ADMIN_IDS = os.getenv("ADMIN_IDS")
 
 
@@ -32,6 +32,11 @@ class UserRecord(StatesGroup):
     # Шаги состояний
     date = State()
     contact = State()
+
+
+class RecordUserCallBack(CallbackData, prefix="record_user"):
+    date: str = None
+
 
 
 @user_router.message(CommandStart())

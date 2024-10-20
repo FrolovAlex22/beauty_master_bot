@@ -13,21 +13,20 @@ from database.methods import (
     orm_get_info_pages,
 )
 
-from filters.is_admin import ChatTypeFilter, IsAdmin
+from filters.is_admin import IsAdmin
 from handlers.handlers_methods import get_media_banner
 from handlers.material_handlers import AddMaterial
 from handlers.note_handlers import AddNotes
 from handlers.record_handlers import AddRecord
 from keyboards.other_kb import (
-    ADMIN_KB, ADMIN_MENU_KB, ADD_OR_CHANGE_RECORD_ADMIN, CHOISE_CATEGORY_FOR_CHANGE,
-    MATERIAL_ADMIN, NOTE_ADMIN, SELECTION_AFTER_ADDING_BANNER
+    ADMIN_MENU_KB, ADD_OR_CHANGE_RECORD_ADMIN, MATERIAL_ADMIN, NOTE_ADMIN,
+    SELECTION_AFTER_ADDING_BANNER
 )
 from middlewares.db import DataBaseSession
 
 
 
 admin_router = Router()
-# admin_router.message.filter(ChatTypeFilter(["private"]), IsAdmin())
 
 admin_router.message.filter(IsAdmin())
 
