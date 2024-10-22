@@ -204,6 +204,14 @@ async def orm_get_notes_is_published(session: AsyncSession):
     return result.scalars().all()
 
 
+async def orm_get_notes_by_user(session: AsyncSession, note_type: str):
+    query = select(Note).where(
+        Note.is_published == True, Note.note_type == note_type
+    )
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
 async def orm_get_note(session: AsyncSession, note_id: int):
     query = select(Note).where(Note.id == note_id)
     result = await session.execute(query)

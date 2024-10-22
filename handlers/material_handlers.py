@@ -19,7 +19,7 @@ from database.methods import (
 )
 from database.engine import session_maker
 from filters.is_admin import IsAdmin
-from handlers.handlers_methods import collection_of_materials_list, get_media_banner
+from handlers.handlers_methods import MaterialCallBack, collection_of_materials_list, get_media_banner
 from keyboards.inline import get_callback_btns
 from keyboards.other_kb import (
     ADMIN_MENU_KB, CHOISE_CATEGORY_ADMIN, CHOISE_CATEGORY_FOR_CHANGE,
@@ -42,14 +42,14 @@ material_router.callback_query.middleware(
 )
 
 
-class MaterialCallBack(CallbackData, prefix="material"):
-    quantity_material: int = None
-    title:str
-    description:str
-    packing:float
-    price:int
-    action: str
-    material_id: int
+# class MaterialCallBack(CallbackData, prefix="material"):
+#     quantity_material: int = None
+#     title:str
+#     description:str
+#     packing:float
+#     price:int
+#     action: str
+#     material_id: int
 
 
 # FSM для добавления материала

@@ -1,7 +1,7 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from handlers.handlers_methods import MaterialCallBack
 from keyboards.reply import get_keyboard
-from keyboards.inline import get_callback_btns
+from keyboards.inline import ProductCallBack, get_callback_btns
 from aiogram.types import KeyboardButton, KeyboardButton, ReplyKeyboardMarkup
 
 # Основное меню для пользователя
@@ -92,8 +92,8 @@ ADMIN_MENU_KB = get_callback_btns(
 USER_MENU_KB = get_callback_btns(
     btns={
         "Записи клиентов": "user_record",
-        "Материалы для домашнего ухода": "my_material",
-        "Полезная информация от мастера": "my_note",
+        "Материалы для домашнего ухода": ProductCallBack().pack(),
+        "Полезная информация от мастера": "user_note_list_choise_type",
     },
     sizes=(2,),
 )
@@ -121,12 +121,6 @@ USER_SENDING_CONTACT_KB = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
-# USER_SENDING_CONTACT_KB = get_keyboard(
-#     "Отправить",
-#     "dthyenmcz",
-#     request_contact=0,
-#     sizes=(1,),
-# )
 
 # БАНЕРЫ
 # Выбор после добавления банера
@@ -238,6 +232,17 @@ NOTE_CHOISE_TYPE = get_callback_btns(
     btns={
         "Подробно о материалах": "note material_info",
         "Полезно знать": "note good_to_know",
+    },
+    sizes=(2,),
+)
+
+
+NOTE_CHOISE_TYPE_BY_USER = get_callback_btns(
+    btns={
+        "Подробно о материалах": "user_note material_info",
+        "Полезно знать": "user_note good_to_know",
+        "Вернуться в главное меню": "main_menu",
+
     },
     sizes=(2,),
 )

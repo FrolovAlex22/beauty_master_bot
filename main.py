@@ -14,7 +14,7 @@ load_dotenv(find_dotenv())
 
 from config_data.config import Config, load_config
 from database.engine import create_db, drop_db
-from handlers import admin_handlers, check_handlers, material_handlers, note_handlers, other_handlers, user_handlers, record_handlers
+from handlers import admin_handlers, material_handlers, note_handlers, other_handlers, user_handlers, record_handlers
 from keyboards.main_menu import set_main_menu
 
 # Инициализируем логгер
@@ -64,7 +64,6 @@ async def main():
     dp.include_router(record_handlers.record_router)
     dp.include_router(material_handlers.material_router)
     dp.include_router(note_handlers.note_router)
-    dp.include_router(check_handlers.check_router)
     dp.include_router(other_handlers.router)
 
     await bot.delete_webhook(drop_pending_updates=True)

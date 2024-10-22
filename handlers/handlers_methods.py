@@ -8,10 +8,14 @@ from database.methods import (
     # orm_delete_from_cart,
     orm_get_banner,
     orm_get_categories,
+    orm_get_category_by_name,
+    orm_get_material_by_category_id,
     # orm_get_products,
     # orm_get_user_carts,
     # orm_reduce_product_in_cart,
 )
+from keyboards.inline import get_products_btns
+from utils.paginator import Paginator
 # from keyboards.inline import (
 #     # get_products_btns,
 #     # get_user_cart,
@@ -30,6 +34,16 @@ class MaterialCallBack(CallbackData, prefix="material"):
     price:int
     action: str
     material_id: int
+
+
+# class UserHomeCareCallBack(CallbackData, prefix="home_care"):
+#     quantity_material: int = None
+#     title:str
+#     description:str
+#     packing:float
+#     price:int
+#     action: str
+#     material_id: int
 
 
 # Получить изображение и описание баннера
@@ -59,3 +73,44 @@ async def client_reception_in_the_list(records: tuple):
     for record in records:
         text += f"<b>{record.date.strftime('%d.%m.%Y')}</b>\n"
     return text
+
+
+def pages(paginator: Paginator):
+    btns = dict()
+    if paginator.has_previous():
+        btns["◀ Пред."] = "previous"
+
+    if paginator.has_next():
+        btns["След. ▶"] = "next"
+
+    return btns
+
+
+async def products(session, page):
+    category_id = await orm_get_category_by_name(session, "home_care")
+    products = await orm_get_material_by_category_id(
+        session, category_id=category_id.id
+    )
+
+    paginator = Paginator(products, page=page)
+    product = paginator.get_page()[0]
+
+    image = InputMediaPhoto(
+        media=product.photo,
+        caption=f"<strong>{product.title}"
+                f"</strong>\n{product.description}\n"
+                f"Стоимость: {round(product.price, 2)}\n"
+                f"<strong>Товар {paginator.page} из {paginator.pages}</strong>",
+    )
+
+    pagination_btns = pages(paginator)
+
+    kbds = get_products_btns(
+        # level=level,
+        # category=category,
+        page=page,
+        pagination_btns=pagination_btns,
+        # product_id=product.id,
+    )
+
+    return image, kbds
