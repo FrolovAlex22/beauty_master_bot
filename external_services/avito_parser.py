@@ -4,8 +4,10 @@ from bs4 import BeautifulSoup as BS
 import requests
 from fake_useragent import UserAgent
 
-URL = "https://yandex.ru/search/?text=мастер+по+реконструкции+волос+бирск&lr=20689&clid=2270455&win=644"
-
+URL = (
+    "https://yandex.ru/search/?text=мастер+по+реконструкции"
+    "+волос+бирск&lr=20689&clid=2270455&win=644"
+)
 # получаем сайт с передачей случайного user-agent
 r = requests.get(URL)
 # получаем весь текст-код сайта

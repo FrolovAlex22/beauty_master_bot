@@ -1,9 +1,9 @@
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
+from sqlalchemy.ext.asyncio import (
+    AsyncSession, async_sessionmaker, create_async_engine
+)
 from config_data.config import DATABASE_URL
 from database.models import Base
 from database.methods import orm_add_banner_description, orm_create_categories
-from database.methods import orm_add_banner_description
 from lexicon.text_for_db import DESCRIPTION_FOR_INFO_PAGES, CATEGORIES
 
 

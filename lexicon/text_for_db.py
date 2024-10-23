@@ -1,4 +1,4 @@
-from aiogram.utils.formatting import Bold, as_list, as_marked_section
+from aiogram.utils.formatting import Bold, as_marked_section
 
 CATEGORIES = [
     'ceratin_botox', 'cold_recovery', "home_care"
@@ -8,7 +8,7 @@ DESCRIPTION_FOR_INFO_PAGES = {
     "main": "Добро пожаловать в бот мастера Лианы!",
     "admin": "\U0001F60E Меню Администратора \U0001F60E",
     "about": (
-        "Это бот ассистен, здесь вы можете посмотреть расписание моего графика."
+        "Это бот ассистен, здесь вы можете посмотреть расписание моего графика"
         "\n\nТак же здесь можно ознакомитьс с товарами для домашнего ухода"),
     "material_entries": as_marked_section(
         Bold("Расписание на две недели:"),

@@ -4,6 +4,7 @@ beautifulsoup4
 aiogram
 aiohttp
 fake_useragent
+flake8
 lxml
 undetected-chromedriver
 aiofiles==23.2.1

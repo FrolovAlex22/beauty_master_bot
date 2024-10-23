@@ -3,8 +3,6 @@ from aiogram import F, Router
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.fsm.storage.redis import RedisStorage, Redis
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.methods import (
@@ -13,13 +11,15 @@ from database.methods import (
     orm_update_record
 )
 from database.engine import session_maker
-from filters.is_admin import ChatTypeFilter, IsAdmin
-from handlers.material_handlers import AddMaterial
-from handlers.note_handlers import AddNotes
+from filters.is_admin import IsAdmin
 from keyboards.my_calendar import CalendarMarkup
-from keyboards.reply import get_keyboard
 from keyboards.inline import get_callback_btns
-from keyboards.other_kb import ADMIN_MENU_KB, RECORD_AFTER_FILING, CHANGE_RECORD_KB, ADMIN_KB, RECORD_AFTER_LIST_RESORD, RECORD_KB
+from keyboards.other_kb import (
+    ADMIN_MENU_KB,
+    RECORD_AFTER_FILING,
+    CHANGE_RECORD_KB,
+    RECORD_AFTER_LIST_RESORD
+)
 from lexicon.lexicon_ru import (
     LEXICON,
     LEXICON_CALENDAR,
@@ -32,7 +32,9 @@ record_router = Router()
 record_router.message.filter(IsAdmin())
 
 record_router.message.middleware(DataBaseSession(session_pool=session_maker))
-record_router.callback_query.middleware(DataBaseSession(session_pool=session_maker))
+record_router.callback_query.middleware(
+    DataBaseSession(session_pool=session_maker)
+)
 
 
 class AddRecord(StatesGroup):
@@ -58,7 +60,6 @@ async def back_step_handler(message: Message, state: FSMContext) -> None:
     """Возврат к предыдущему шагу во время зполнения FSM для засписей"""
     current_state = await state.get_state()
 
-
     if current_state == AddRecord.date:
         await message.answer(
             'Предидущего шага нет, или введите дату'
@@ -78,7 +79,9 @@ async def back_step_handler(message: Message, state: FSMContext) -> None:
         previous = step
 
 
-@record_router.callback_query(StateFilter(None), F.data.startswith("add_record"))
+@record_router.callback_query(
+        StateFilter(None), F.data.startswith("add_record")
+    )
 async def calendar_add_reception(
     callback: CallbackQuery, state: FSMContext, session: AsyncSession
 ) -> None:
@@ -122,13 +125,17 @@ async def calendar_add_date(
 
 
 @record_router.message(AddRecord.date)
-async def calendar_wrong_name_client(message: Message, state: FSMContext):
+async def calendar_wrong_name_client(
+    message: Message, state: FSMContext
+) -> None:
     """Валидация вводимых данных в календаре"""
     await message.answer(LEXICON_CALENDAR["calendar_add_invalid_date"])
 
 
 @record_router.message(AddRecord.name, F.text)
-async def calendar_add_name_client(message: Message, state: FSMContext):
+async def calendar_add_name_client(
+    message: Message, state: FSMContext
+) -> None:
     """Ввод имени, вход в состояние ввода номера телефона."""
     await message.delete()
     if len(message.text) >= 30:
@@ -145,8 +152,9 @@ async def calendar_add_name_client(message: Message, state: FSMContext):
         await message.answer(LEXICON_CALENDAR["calendar_add_input_name"])
     await state.set_state(AddRecord.phone_number)
 
+
 @record_router.message(AddRecord.name)
-async def calendar_wrong_name_client(message: Message, state: FSMContext):
+async def calendar_wrong_name(message: Message, state: FSMContext) -> None:
     """Валидация вводимых имени"""
     await message.delete()
     await message.answer(LEXICON_CALENDAR["calendar_wrong_name_client"])
@@ -157,7 +165,7 @@ async def calendar_add_phone_number_client(
     message: Message,
     state: FSMContext,
     session: AsyncSession
-):
+) -> None:
     """Ввод номера телефона, завершение добавления записи."""
     await message.delete()
     answer = message.text
@@ -178,7 +186,9 @@ async def calendar_add_phone_number_client(
 
     try:
         if AddRecord.record_for_change:
-            await orm_update_record(session, AddRecord.record_for_change.id, data)
+            await orm_update_record(
+                session, AddRecord.record_for_change.id, data
+            )
         else:
             await orm_add_record(session, data)
         await message.answer(
@@ -202,10 +212,13 @@ async def calendar_add_phone_number_client(
 async def calendar_wrong_phone_number_client(
     message: Message,
     state: FSMContext
-):
+) -> None:
     """Валидация вводимого номера"""
-    await message.answer(LEXICON_CALENDAR["calendar_wrong_phone_number_client"])
-### КОНЕЦ FSM
+    await message.answer(
+        LEXICON_CALENDAR["calendar_wrong_phone_number_client"]
+    )
+# КОНЕЦ FSM
+
 
 @record_router.callback_query(F.data.startswith("list_from_change_record"))
 async def calendar_reception_list(
@@ -233,7 +246,9 @@ async def calendar_reception_list(
     )
 
 
-@record_router.callback_query(StateFilter(None), F.data.startswith("change_record_"))
+@record_router.callback_query(
+        StateFilter(None), F.data.startswith("change_record_")
+    )
 async def change_record_callback(
     callback: CallbackQuery, state: FSMContext, session: AsyncSession
 ) -> None:
@@ -257,37 +272,15 @@ async def change_record_callback(
 
 
 @record_router.callback_query(F.data.startswith("delete_record_"))
-async def delete_record_cb(callback: CallbackQuery, session: AsyncSession):
+async def delete_record_cb(
+    callback: CallbackQuery, session: AsyncSession
+) -> None:
     """Удаляем запись"""
     record_id = callback.data.split("_")[-1]
     await orm_delete_record(session, int(record_id))
 
     await callback.answer("Запись удалена!")
     await callback.message.answer("Запись удалена!")
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ОТСЕЧКА ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# @record_router.message(F.text == "Мои записи")
-# async def calendar_reception_list(message: Message, session: AsyncSession):
-#     for record in await orm_get_records(session):
-#         await message.answer(
-#             text=(
-#                 f"<b>Имя клиента:</b> {record.name}\n\n"
-#                 f"<b>Номер клиента:</b> {record.phone_number}\n"
-#                 f"<b>Дата приема клиента:</b> {record.date.strftime("%d/%m/%Y")}"
-#             ),
-#             reply_markup=get_callback_btns(
-#                 btns={
-#                     "Удалить": f"delete_record_{record.id}",
-#                     "Изменить": f"change_record_{record.id}",
-#                 }
-#             ),
-#         )
-#     await message.answer(
-#         "ОК, вот список записей ⏫",
-#         reply_markup=get_keyboard("Мои записи", "Главное меню", sizes=(1, ))
-#     )
 
 
 async def get_next_month(callback: CallbackQuery) -> None:

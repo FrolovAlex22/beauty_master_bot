@@ -5,17 +5,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.models import Category, Record, Material, Note, Banner
 
 
-############################ Категории ######################################
+# Категории
 
 async def orm_get_categories(session: AsyncSession):
     query = select(Category)
     result = await session.execute(query)
     return result.scalars().all()
 
+
 async def orm_get_category_by_name(session: AsyncSession, name: str):
     query = select(Category).where(Category.name == name)
     result = await session.execute(query)
     return result.scalar()
+
 
 async def orm_create_categories(session: AsyncSession, categories: list):
     query = select(Category)
@@ -25,20 +27,23 @@ async def orm_create_categories(session: AsyncSession, categories: list):
     session.add_all([Category(name=name) for name in categories])
     await session.commit()
 
-############### Работа с баннерами (информационными страницами) ###############
 
+# Работа с баннерами (информационными страницами)
 async def orm_add_banner_description(session: AsyncSession, data: dict):
-    #Добавляем новый или изменяем существующий по именам
-    #пунктов меню: main, about, cart, shipping, payment, catalog
     query = select(Banner)
     result = await session.execute(query)
     if result.first():
         return
-    session.add_all([Banner(name=name, description=description) for name, description in data.items()])
+    session.add_all(
+        [Banner(name=name, description=description) for name, description
+         in data.items()]
+    )
     await session.commit()
 
 
-async def orm_change_banner_image(session: AsyncSession, name: str, image: str):
+async def orm_change_banner_image(
+        session: AsyncSession, name: str, image: str
+):
     query = update(Banner).where(Banner.name == name).values(image=image)
     await session.execute(query)
     await session.commit()
@@ -56,7 +61,7 @@ async def orm_get_info_pages(session: AsyncSession):
     return result.scalars().all()
 
 
-############### Работа с записями клиентов ####################################
+# Работа с записями клиентов
 
 async def orm_add_record(session: AsyncSession, data: dict):
     date = datetime.strptime(data["date"], '%d.%m.%Y')
@@ -98,8 +103,7 @@ async def orm_delete_record(session: AsyncSession, record_id: int):
     await session.commit()
 
 
-############### Работа с материаломи мастера ##################################
-
+# Работа с материаломи мастера
 async def orm_add_material(session: AsyncSession, data: dict):
     obj = Material(
         title=data["title"],
@@ -108,7 +112,7 @@ async def orm_add_material(session: AsyncSession, data: dict):
         packing=data["packing"],
         price=data["price"],
         quantity=data["quantity"],
-        category_id = data["category_name"],
+        category_id=data["category_name"],
     )
     session.add(obj)
     await session.commit()
@@ -134,7 +138,7 @@ async def orm_get_material(session: AsyncSession, material_id: int):
 
 async def orm_get_material_by_title(
         session: AsyncSession, material_title: str, material_packing: int
-    ):
+):
     query = select(Material).where(
         Material.quantity == material_packing,
         Material.title == material_title
@@ -143,7 +147,9 @@ async def orm_get_material_by_title(
     return result.scalar()
 
 
-async def orm_get_material_by_category_id(session: AsyncSession, category_id: int):
+async def orm_get_material_by_category_id(
+        session: AsyncSession, category_id: int
+):
     query = select(Material).where(Material.category_id == category_id)
     result = await session.execute(query)
     return result.scalars().all()
@@ -170,7 +176,7 @@ async def orm_delete_material(session: AsyncSession, material_id: int):
 
 async def material_fix_quantity(
         session: AsyncSession, material_id: int, new_quantity: int
-    ):
+):
     query = update(Material).where(Material.id == material_id).values(
         quantity=new_quantity
     )
@@ -178,15 +184,15 @@ async def material_fix_quantity(
     await session.commit()
 
 
-############### Работа с записями контента ####################################
+# Работа с записями контента
 
 async def orm_add_note(session: AsyncSession, data: dict):
     obj = Note(
-        note_type = data["note_type"],
+        note_type=data["note_type"],
         title=data["title"],
         description=data["description"],
         photo=data["photo"],
-        is_published = data["is_published"],
+        is_published=data["is_published"],
     )
     session.add(obj)
     await session.commit()
@@ -199,14 +205,14 @@ async def orm_get_notes(session: AsyncSession, note_type: str):
 
 
 async def orm_get_notes_is_published(session: AsyncSession):
-    query = select(Note).where(Note.is_published == True)
+    query = select(Note).where(Note.is_published)
     result = await session.execute(query)
     return result.scalars().all()
 
 
 async def orm_get_notes_by_user(session: AsyncSession, note_type: str):
     query = select(Note).where(
-        Note.is_published == True, Note.note_type == note_type
+        Note.is_published, Note.note_type == note_type
     )
     result = await session.execute(query)
     return result.scalars().all()
@@ -220,7 +226,7 @@ async def orm_get_note(session: AsyncSession, note_id: int):
 
 async def orm_update_note(session: AsyncSession, note_id: int, data):
     query = update(Note).where(Note.id == note_id).values(
-        note_type = data["note_type"],
+        note_type=data["note_type"],
         title=data["title"],
         description=data["description"],
         photo=data["photo"],
@@ -232,7 +238,7 @@ async def orm_update_note(session: AsyncSession, note_id: int, data):
 
 async def orm_change_puplish_note(
         session: AsyncSession, note_id: int, status: bool
-    ):
+):
     if status:
         new_status = False
     else:

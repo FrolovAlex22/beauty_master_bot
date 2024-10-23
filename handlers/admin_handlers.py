@@ -1,9 +1,8 @@
 from aiogram import F, Router
-from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, StateFilter, or_f
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.engine import session_maker
@@ -12,7 +11,6 @@ from database.methods import (
     orm_get_banner,
     orm_get_info_pages,
 )
-
 from filters.is_admin import IsAdmin
 from handlers.handlers_methods import get_media_banner
 from handlers.material_handlers import AddMaterial
@@ -25,13 +23,14 @@ from keyboards.other_kb import (
 from middlewares.db import DataBaseSession
 
 
-
 admin_router = Router()
 
 admin_router.message.filter(IsAdmin())
 
 admin_router.message.middleware(DataBaseSession(session_pool=session_maker))
-admin_router.callback_query.middleware(DataBaseSession(session_pool=session_maker))
+admin_router.callback_query.middleware(
+    DataBaseSession(session_pool=session_maker)
+)
 
 
 @admin_router.message(StateFilter("*"), Command("admin"))
@@ -47,13 +46,14 @@ async def admin_features(
     """Вызов меню администратора"""
     await state.clear()
     banner = await orm_get_banner(session, page="admin")
-    if  not banner.image:
+    if not banner.image:
         await message.answer(
             "<b>Необходимо добавить баннер</b>", reply_markup=ADMIN_MENU_KB
         )
     await message.answer_photo(
         banner.image, caption=banner.description, reply_markup=ADMIN_MENU_KB
     )
+
 
 @admin_router.callback_query(StateFilter(None), F.data == "admin_menu")
 async def admin_features_callback(
@@ -70,7 +70,8 @@ async def admin_features_callback(
             media=media,
             reply_markup=ADMIN_MENU_KB
         )
-    except:
+    except Exception as e:
+        print(e)
         await callback.message.answer_photo(
             media.media,
             media.caption,
@@ -79,15 +80,16 @@ async def admin_features_callback(
 
 
 @admin_router.callback_query(StateFilter(None), F.data == "calendar_record")
-async def admin_records(callback: CallbackQuery, session: AsyncSession):
+async def admin_records(
+    callback: CallbackQuery, session: AsyncSession
+) -> None:
     """Вызов меню записей для администратора"""
     await callback.answer()
     media = await get_media_banner(session, menu_name="calendar_entries")
-    # По хорошему лучше ловить исключение и отправлять текст ниже
-    if  not media:
+    if not media:
         await callback.message.answer(
             "<b>Необходимо добавить баннер</b>", reply_markup=ADMIN_MENU_KB
-    )
+        )
     await callback.message.edit_media(
         media=media,
         reply_markup=ADD_OR_CHANGE_RECORD_ADMIN
@@ -97,7 +99,9 @@ async def admin_records(callback: CallbackQuery, session: AsyncSession):
 @admin_router.callback_query(
         StateFilter(None), F.data == "admin_choise_material"
     )
-async def admin_records(callback: CallbackQuery, session: AsyncSession) -> None:
+async def admin_record_menu_choise(
+    callback: CallbackQuery, session: AsyncSession
+) -> None:
     """Вызов меню материалов для администратора"""
     await callback.answer()
     media = await get_media_banner(session, menu_name="material_entries")
@@ -114,7 +118,9 @@ async def admin_records(callback: CallbackQuery, session: AsyncSession) -> None:
 @admin_router.callback_query(
         StateFilter(None), F.data == "admin_note"
     )
-async def admin_records(callback: CallbackQuery, session: AsyncSession) -> None:
+async def admin_record_menu(
+    callback: CallbackQuery, session: AsyncSession
+) -> None:
     """Вызов меню материалов для администратора"""
     await callback.answer()
     media = await get_media_banner(session, menu_name="information")
@@ -149,8 +155,7 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
     await message.answer("Действия отменены", reply_markup=ADMIN_MENU_KB)
 
 
-################# Микро FSM для загрузки/изменения баннеров ###################
-
+# Микро FSM для загрузки/изменения баннеров
 class AddBanner(StatesGroup):
     image = State()
 
@@ -161,7 +166,7 @@ class AddBanner(StatesGroup):
     )
 async def add_image2(
     callback: CallbackQuery, state: FSMContext, session: AsyncSession
-):
+) -> None:
     """
     Отправляем перечень информационных страниц бота и становимся в состояние
     отправки photo
@@ -176,7 +181,9 @@ async def add_image2(
 
 
 @admin_router.message(AddBanner.image, F.photo)
-async def add_banner(message: Message, state: FSMContext, session: AsyncSession):
+async def add_banner(
+    message: Message, state: FSMContext, session: AsyncSession
+) -> None:
     """
     Добавляем/изменяем изображение в таблице (данные баннера заполнены в БД)
     """
@@ -199,6 +206,6 @@ async def add_banner(message: Message, state: FSMContext, session: AsyncSession)
 
 
 @admin_router.message(AddBanner.image)
-async def add_banner2(message: Message, state: FSMContext):
+async def add_banner2(message: Message) -> None:
     """Ловим некоррекный ввод"""
     await message.answer("Отправьте фото баннера или отмена")

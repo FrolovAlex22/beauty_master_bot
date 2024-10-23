@@ -1,10 +1,8 @@
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from handlers.handlers_methods import MaterialCallBack
 from keyboards.reply import get_keyboard
 from keyboards.inline import ProductCallBack, get_callback_btns
-from aiogram.types import KeyboardButton, KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
-# Основное меню для пользователя
+
 ADMIN_KB = get_keyboard(
         "Календарь записей",
         "Мои материалы",
@@ -64,9 +62,9 @@ NOTE_KB = get_keyboard(
 
 
 CHECK_KB = get_keyboard(
-	"Реконструкция волос",
-	"Маникюр",
-	"Ресницы",
+    "Реконструкция волос",
+    "Маникюр",
+    "Ресницы",
     "Главное меню",
     sizes=(1, )
 )
@@ -80,10 +78,6 @@ ADMIN_MENU_KB = get_callback_btns(
         "Мои заметки": "admin_note",
         "Добавить/Изменить баннер": "add_change_banner",
     },
-    # "Мои записи",
-    # "Составы, материалы",
-    # # "Ассортимент",
-    # "Добавить/Изменить баннер",
     sizes=(2,),
 )
 
@@ -172,7 +166,6 @@ CHOISE_CATEGORY_ADMIN = get_callback_btns(
     },
     sizes=(2,),
 )
-
 
 
 CHOISE_CATEGORY_FOR_CHANGE = get_callback_btns(

@@ -5,7 +5,7 @@ from calendar import monthrange
 from itertools import zip_longest
 from typing import List
 
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
@@ -72,7 +72,6 @@ class CalendarMarkup:
         """Инициализация всех значений."""
         self.month = month
         self.year = year
-
 
     def next_month(self) -> Markup:
         """Получение данных на следующий месяц."""

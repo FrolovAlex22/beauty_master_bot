@@ -20,9 +20,9 @@ class Base(DeclarativeBase):
 class User(Base):
     __tablename__ = "users"
 
-    id : Mapped[int] = mapped_column(primary_key=True)
-    name : Mapped[str] = mapped_column(String(30), nullable=False)
-    telegram_id : Mapped[int]
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(30), nullable=False)
+    telegram_id: Mapped[int]
 
 
 class Category(Base):
@@ -56,11 +56,13 @@ class Material(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    photo:Mapped[str] = mapped_column(String(150), nullable=False)
+    photo: Mapped[str] = mapped_column(String(150), nullable=False)
     packing: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
     price: Mapped[int] = mapped_column(nullable=False)
     quantity: Mapped[int] = mapped_column(nullable=False)
-    category_id: Mapped[int] = mapped_column(ForeignKey('category.id', ondelete='CASCADE'), nullable=False)
+    category_id: Mapped[int] = mapped_column(
+        ForeignKey('category.id', ondelete='CASCADE'), nullable=False
+    )
 
     category: Mapped['Category'] = relationship(backref='products')
 
