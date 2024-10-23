@@ -4,11 +4,7 @@ from aiogram.utils.formatting import Bold, as_marked_section
 LEXICON_COMMANDS: dict[str, str] = {
     "/main_menu": "Вернутся в главное меню",
     "/help": "Справка по работе бота",
-    "/records": "Календарь записей",
-    "/materials": "Остаток материалов",
-    "/notes": "Заметки для будущих постов в социальных сетях",
-    "/check": "Проверить мастеров города",
-    "/registration": "регистрация",
+    "/admin": "Меню администратора",
 }
 
 LEXICON: dict[str, str] = {

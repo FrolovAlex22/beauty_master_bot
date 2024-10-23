@@ -41,7 +41,6 @@ dp = Dispatcher(storage=storage)
 
 bot.my_admins_list = [os.getenv('ADMIN_IDS')]
 
-
 async def on_startup(bot):
 
     # run_param = True
